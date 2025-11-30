@@ -3,8 +3,34 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-app = FastAPI()
+from api.app.database import create_db_and_tables, get_async_session
+from api.app.models import Note as NotesModel
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from contextlib import asynccontextmanager
+
+from api.app.routers import files, notes
+from api.app.schemas import Note
+
+
+# from api.app.database import create_db_and_tables
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_db_and_tables()
+    yield
+
+
+# app = FastAPI(title="File & Note System")
+app = FastAPI(lifespan=lifespan)
+
+app.include_router(files.router)
+app.include_router(notes.router)
+
+
+# app.include_router(immich.router)
 
 @app.get("/api/hello")
 async def hello():
