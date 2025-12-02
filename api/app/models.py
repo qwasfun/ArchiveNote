@@ -4,6 +4,15 @@ from datetime import datetime
 from .database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String)
+    nickname = Column(String)
+    password = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
 class File(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
@@ -13,6 +22,7 @@ class File(Base):
     note = Column(Text, nullable=True)
     tags = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Note(Base):

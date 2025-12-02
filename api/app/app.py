@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from contextlib import asynccontextmanager
 
-from api.app.routers import files, notes
+from api.app.routers import users, auth, files, notes
 from api.app.schemas import Note
 
 
@@ -26,6 +26,8 @@ async def lifespan(app: FastAPI):
 # app = FastAPI(title="File & Note System")
 app = FastAPI(lifespan=lifespan)
 
+app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(files.router)
 app.include_router(notes.router)
 
