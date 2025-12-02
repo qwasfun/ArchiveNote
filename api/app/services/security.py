@@ -1,15 +1,14 @@
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 
-# Using bcrypt for hashing passwords. Adjust schemes if needed.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+# https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/#hash-and-verify-the-passwords
+password_hash = PasswordHash.recommended()
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return password_hash.verify(plain_password, hashed_password)
 
 
 from fastapi import Depends, HTTPException, status
@@ -24,7 +23,8 @@ from api.app.models import User
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_async_session)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme),
+                           session: AsyncSession = Depends(get_async_session)) -> User:
     try:
         payload = decode_access_token(token)
         username: str = payload.get("sub")
