@@ -13,8 +13,8 @@ class NoteUpdate(BaseModel):
 
 
 class NoteResponse(BaseModel):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     title: str
     content: str
     created_at: datetime

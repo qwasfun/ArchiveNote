@@ -1,12 +1,13 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+import uuid
 
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     username = Column(String)
     nickname = Column(String)
     password = Column(String)
@@ -15,7 +16,7 @@ class User(Base):
 
 class File(Base):
     __tablename__ = "files"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     filename = Column(String)
     path = Column(String)
     mimetype = Column(String)
@@ -27,8 +28,8 @@ class File(Base):
 
 class Note(Base):
     __tablename__ = "notes"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"))
     title = Column(String)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -37,8 +38,8 @@ class Note(Base):
 
 class NoteFile(Base):
     __tablename__ = "note_files"
-    id = Column(Integer, primary_key=True, index=True)
-    note_id = Column(Integer, ForeignKey("notes.id"))
-    file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    note_id = Column(String(36), ForeignKey("notes.id"))
+    file_id = Column(String(36), ForeignKey("files.id"), nullable=True)
     source_type = Column(String)  # local / immich
     external_id = Column(String)  # immich asset id

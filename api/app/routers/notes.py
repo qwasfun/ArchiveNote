@@ -25,7 +25,7 @@ async def get_notes(
 
 @router.get("/{note_id}", response_model=NoteResponse)
 async def get_note(
-    note_id: int,
+    note_id: str,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
@@ -58,7 +58,7 @@ async def create_note(
 
 @router.put("/{note_id}", response_model=NoteResponse)
 async def update_note(
-    note_id: int,
+    note_id: str,
     note_data: NoteUpdate,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
@@ -84,7 +84,7 @@ async def update_note(
 
 @router.delete("/{note_id}")
 async def delete_note(
-    note_id: int,
+    note_id: str,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
