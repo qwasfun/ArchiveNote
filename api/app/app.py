@@ -31,10 +31,6 @@ async def hello():
     return {"message": "Hello World"}
 
 
-app.mount("/files",
-          StaticFiles(directory=Path(__file__).parent.parent / "data/files"),
-          name="files")
-
 # 前端静态目录
 dist_path = Path(__file__).parent / "static"
 app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
