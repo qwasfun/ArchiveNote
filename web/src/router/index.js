@@ -1,24 +1,43 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-import IndexView from '@/views/index/IndexView.vue'
-import HomeView from '@/views/index/HomeView.vue'
-
-import LoginView from '@/views/auth/LoginView.vue'
-import RegisterView from '@/views/auth/RegisterView.vue'
-
-import NotesList from '@/views/notes/NotesList.vue'
-import NotesDetail from '@/views/notes/NotesDetail.vue'
+import HomeView from '../views/index/HomeView.vue'
+import FilesView from '../views/files/FilesView.vue'
+import NotesView from '../views/notes/NotesView.vue'
+import LoginView from '../views/auth/LoginView.vue'
+import RegisterView from '../views/auth/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'index', component: IndexView },
-    { path: '/home', name: 'home', component: HomeView },
-    { path: '/login', redirect: '/auth/login' },
-    { path: '/auth/register', name: 'register', component: RegisterView },
-    { path: '/auth/login', name: 'login', component: LoginView },
-    { path: '/notes', name: 'notesList', component: NotesList },
-    { path: '/notes/:id', name: 'notesDetail', component: NotesDetail },
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+    },
+    {
+      path: '/auth/register',
+      name: 'RegisterView',
+      component: RegisterView,
+    },
+    {
+      path: '/auth/login',
+      name: 'LoginView',
+      component: LoginView,
+    },
+    {
+      path: '/files',
+      name: 'files',
+      component: FilesView,
+    },
+    {
+      path: '/notes',
+      name: 'notes',
+      component: NotesView,
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: () => import('../views/index/SearchView.vue'),
+    },
   ],
 })
 

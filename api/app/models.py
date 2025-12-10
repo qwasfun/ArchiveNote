@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, Text, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
-from .database import Base
+from typing import List, Optional
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Table, Column, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from api.app.database import Base
 import uuid
 
 
@@ -15,46 +16,49 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
+# Many-to-Many Association Table
+file_note_association = Table(
+    "file_note_association",
+    Base.metadata,
+    Column("file_id", String(36), ForeignKey("files.id", ondelete="CASCADE"), primary_key=True),
+    Column("note_id", String(36), ForeignKey("notes.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class File(Base):
     __tablename__ = "files"
+
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), ForeignKey("users.id"))
-    filename = Column(String)
-    mimetype = Column(String)
-    path = Column(String)
-    url = Column(String)
-    # provider_type: LOCAL / 或其他 default LOCAL
-    # TODO：预留其他存储方式，如 s3
-    provider_type = Column(String, default="LOCAL", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    filename: Mapped[str] = mapped_column(String, index=True)
+    storage_path: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    mime_type: Mapped[str] = mapped_column(String, nullable=False)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationship to Notes
+    notes: Mapped[List["Note"]] = relationship(
+        secondary=file_note_association,
+        back_populates="files",
+        lazy="selectin"
+    )
 
 
 class Note(Base):
     __tablename__ = "notes"
+
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), ForeignKey("users.id"))
-    title = Column(String)
-    content = Column(Text)
+    title: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
     # visibility: PRIVATE / PROTECTED / PUBLIC, default PRIVATE
     visibility = Column(String, default="PRIVATE", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
-# class Provider(Base):
-#     __tablename__ = "Providers"
-#     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-#     name = Column(String)
-#     value = Column(String)
-#     created_at = Column(DateTime, default=datetime.utcnow)
-#     updated_at = Column(DateTime, default=datetime.utcnow)
-
-
-class NoteFile(Base):
-    __tablename__ = "note_files"
-    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    note_id = Column(String(36), ForeignKey("notes.id"))
-    file_id = Column(String(36), ForeignKey("files.id"), nullable=True)
-    source_type = Column(String)  # local / immich
-    external_id = Column(String)  # immich asset id
+    # Relationship to Files
+    files: Mapped[List["File"]] = relationship(
+        secondary=file_note_association,
+        back_populates="notes",
+        lazy="selectin"
+    )

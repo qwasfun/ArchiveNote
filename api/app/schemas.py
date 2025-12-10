@@ -31,3 +31,26 @@ class NoteResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FileResponseModel(BaseModel):
+    id: str
+    user_id: str
+    filename: str
+    storage_path: str
+    mime_type: str
+    size: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    nickname: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
