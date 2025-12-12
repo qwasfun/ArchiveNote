@@ -1,17 +1,17 @@
-import apiV1 from './apiV1.js'
+import service from '@/utils/service'
 
 export default {
   uploadFiles(formData) {
-    return apiV1.post('/files/', formData, {
+    return service.post('/v1/files/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
   },
   getFiles(params) {
-    return apiV1.get('/files/', { params })
+    return service.get('/v1/files/', { params })
   },
   deleteFile(id) {
-    return apiV1.delete(`/files/${id}`)
+    return service.delete(`/v1/files/${id}`)
   },
 }

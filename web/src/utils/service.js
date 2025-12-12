@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
@@ -9,11 +10,16 @@ const service = axios.create({
 
 const noAuthPaths = ['/auth/register', '/auth/login']
 
-const access_token = localStorage.getItem('access_token')
-
 service.interceptors.request.use(
   (config) => {
-    if (!noAuthPaths.includes(baseURL)) {
+    // 从 Pinia store 获取 token
+    const authStore = useAuthStore()
+    const access_token = authStore.accessToken
+    
+    // 检查当前请求路径是否需要认证
+    const isNoAuthPath = noAuthPaths.some(path => config.url.includes(path))
+    
+    if (!isNoAuthPath && access_token) {
       // 请求头里添加 access_token
       config.headers.Authorization = `Bearer ${access_token}`
     }

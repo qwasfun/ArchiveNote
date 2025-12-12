@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { register as registerApi } from '@/api/authService'
+import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
+
+const authStore = useAuthStore()
 
 const form = ref({
   username: '',
@@ -27,10 +30,10 @@ const submit = async () => {
       password: form.value.password,
     }
     const res = await registerApi(params)
-    const { user = {}, access_token, refresh_token } = res
-    localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('access_token', access_token)
-    localStorage.setItem('refresh_token', refresh_token)
+    
+    // 使用 auth store 保存认证信息
+    authStore.setAuth(res)
+
     router.push('/')
   } catch (err) {
     console.error(err)

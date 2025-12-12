@@ -1,28 +1,28 @@
-import apiV1 from './apiV1'
+import service from '@/utils/service'
 
 export default {
   createNote(noteData) {
-    return apiV1.post('/notes/', noteData)
+    return service.post('/v1/v1/notes/', noteData)
   },
   getNotes(params) {
-    return apiV1.get('/notes/', { params })
+    return service.get('/v1/notes/', { params })
   },
   getNote(id) {
-    return apiV1.get(`/notes/${id}`)
+    return service.get(`/v1/notes/${id}`)
   },
   getNotesByFileId(fileId) {
-    return apiV1.get('/notes/', { params: { file_id: fileId } })
+    return service.get('/v1/notes/', { params: { file_id: fileId } })
   },
   updateNote(id, noteData) {
-    return apiV1.put(`/notes/${id}`, noteData)
+    return service.put(`/v1/notes/${id}`, noteData)
   },
   deleteNote(id) {
-    return apiV1.delete(`/notes/${id}`)
+    return service.delete(`/v1/notes/${id}`)
   },
   attachFiles(id, fileIds) {
-    return apiV1.post(`/notes/${id}/attach`, fileIds)
+    return service.post(`/v1/notes/${id}/attach`, fileIds)
   },
   detachFiles(id, fileIds) {
-    return apiV1.post(`/notes/${id}/detach`, fileIds)
+    return service.post(`/v1/notes/${id}/detach`, fileIds)
   },
 }
