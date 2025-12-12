@@ -2,6 +2,7 @@ import shutil
 import os
 import uuid
 from typing import List, Optional
+from urllib.parse import quote
 from fastapi import APIRouter, UploadFile, Depends, HTTPException, File as FastAPIFile, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func
@@ -166,6 +167,17 @@ async def download_file(
     if not os.path.exists(storage_path):
         raise HTTPException(status_code=404, detail="文件在服务器上不存在")
 
+    # 如果是PDF文件,使用inline方式在浏览器中显示
+    if file_record.mime_type == "application/pdf":
+        # 对文件名进行URL编码以支持中文等非ASCII字符
+        encoded_filename = quote(file_record.filename)
+        return FileResponse(
+            path=storage_path,
+            filename=file_record.filename,
+            media_type=file_record.mime_type,
+            headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"}
+        )
+    
     return FileResponse(
         path=storage_path,
         filename=file_record.filename,

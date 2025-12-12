@@ -10,6 +10,9 @@ export default {
   getNote(id) {
     return apiV1.get(`/notes/${id}`)
   },
+  getNotesByFileId(fileId) {
+    return apiV1.get('/notes/', { params: { file_id: fileId } })
+  },
   updateNote(id, noteData) {
     return apiV1.put(`/notes/${id}`, noteData)
   },
