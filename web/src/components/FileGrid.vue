@@ -46,7 +46,6 @@ const getFileTypeColor = (mimeType) => {
   if (mimeType.startsWith('audio/')) return 'bg-purple-100 text-purple-600'
   return 'bg-gray-100 text-gray-600'
 }
-const serverUrl = import.meta.env.VITE_API_FILE_SERVER_URL || ''
 </script>
 
 <template>
@@ -66,7 +65,7 @@ const serverUrl = import.meta.env.VITE_API_FILE_SERVER_URL || ''
         <!-- 图片预览 -->
         <img
           v-if="isImage(file.mime_type)"
-          :src="`${serverUrl}/${file.download_url}`"
+          :src="`${file.download_url}`"
           :alt="file.filename"
           class="w-full h-full object-cover"
         />
@@ -163,7 +162,7 @@ const serverUrl = import.meta.env.VITE_API_FILE_SERVER_URL || ''
         <!-- 操作按钮 -->
         <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
           <a
-            :href="`${serverUrl}/${file.download_url}`"
+            :href="`${file.download_url}`"
             target="_blank"
             download
             class="btn btn-xs btn-ghost flex-1 text-gray-600 hover:text-blue-600"

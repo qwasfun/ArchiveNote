@@ -69,6 +69,9 @@ class StorageBackend(ABC):
         """
         pass
 
+    def get_public_url(self, storage_path):
+        pass
+
 
 class LocalStorageBackend(StorageBackend):
     """本地文件存储后端"""
@@ -121,6 +124,12 @@ class LocalStorageBackend(StorageBackend):
             "type": "local",
             "path": storage_path
         }
+    
+    def get_public_url(self, storage_path: str) -> str:
+        """
+        本地存储不支持公共 URL，返回 None
+        """
+        return None
 
 
 class S3StorageBackend(StorageBackend):
@@ -300,6 +309,46 @@ class S3StorageBackend(StorageBackend):
             }
         except Exception as e:
             raise Exception(f"生成预签名 URL 失败: {e}")
+    
+    def get_public_url(self, storage_path: str) -> str:
+        """
+        生成签名后的公共 URL
+        
+        Args:
+            storage_path: S3 对象键
+            
+        Returns:
+            签名后的公共 URL
+        """
+        # 如果配置了公共 URL，使用自定义端点生成签名 URL
+        if self.public_url:
+            # 使用自定义端点创建临时客户端
+            public_client = boto3.client(
+                's3',
+                aws_access_key_id=self.s3_client._request_signer._credentials.access_key,
+                aws_secret_access_key=self.s3_client._request_signer._credentials.secret_key,
+                endpoint_url=f"https://{self.public_url}" if not self.public_url.startswith('http') else self.public_url,
+                region_name=self.region_name,
+                config=boto3.session.Config(
+                    signature_version='s3v4',
+                    s3={'addressing_style': 'virtual', 'payload_signing_enabled': False}
+                )
+            )
+            try:
+                presigned_url = public_client.generate_presigned_url(
+                    'get_object',
+                    Params={
+                        # 'Bucket': self.bucket_name,
+                        'Key': storage_path
+                    },
+                    ExpiresIn=3600  # 1 小时
+                )
+                return presigned_url
+            except Exception as e:
+                print(f"使用公共 URL 生成签名 URL 失败: {e}，回退到默认方式")
+        
+        # 默认使用标准签名 URL
+        return self.get_download_info(storage_path)["presigned_url"]
     
     def get_object(self, storage_path: str) -> bytes:
         """

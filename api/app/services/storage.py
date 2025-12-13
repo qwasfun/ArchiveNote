@@ -101,3 +101,17 @@ def get_download_info(storage_path: str) -> dict:
     storage = get_storage()
     return storage.get_download_info(storage_path)
 
+
+def get_public_url(storage_path: str) -> str:
+    """
+    获取文件的公共 URL（签名后）
+    
+    Args:
+        storage_path: 文件存储路径
+        
+    Returns:
+        公共 URL 或 None
+    """
+    storage = get_storage()
+    return storage.get_public_url(storage_path)
+

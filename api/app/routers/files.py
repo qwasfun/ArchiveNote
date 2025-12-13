@@ -1,6 +1,3 @@
-import shutil
-import os
-import uuid
 from typing import List, Optional
 from urllib.parse import quote
 from fastapi import APIRouter, UploadFile, Depends, HTTPException, File as FastAPIFile, Query
@@ -13,9 +10,8 @@ from api.app.schemas import FileResponseModel
 from fastapi.responses import FileResponse
 from api.app.models import User
 from datetime import datetime
-from api.app.services.storage import save_file, delete_file, file_exists, get_download_info, get_storage
+from api.app.services.storage import save_file, delete_file, file_exists, get_storage, get_public_url
 from api.app.services.storage_backend import S3StorageBackend
-import io
 
 router = APIRouter(prefix="/api/v1/files", tags=["Files"])
 
@@ -96,7 +92,7 @@ async def list_files(
                 "filename": f.filename,
                 "size": f.size,
                 "storage_path": f.storage_path,
-                "download_url": f"api/v1/files/download/{f.id}/{f.filename}",
+                "download_url": get_public_url(f.storage_path) or f"/api/v1/files/download/{f.id}/{f.filename}",
                 "mime_type": f.mime_type,
                 "created_at": f.created_at
             }
@@ -110,7 +106,7 @@ async def get_file_metadata(file_id: str, db: AsyncSession = Depends(get_async_s
                             current_user: User = Depends(get_current_user)):
     result = await db.execute(select(File).where((File.id == file_id) & (File.user_id == current_user.id)))
     file = result.scalar_one_or_none()
-    file.download_url = f"api/v1/files/download/{file.id}/{file.filename}",
+    file.download_url = f"/api/v1/files/download/{file.id}/{file.filename}",
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
     return file
