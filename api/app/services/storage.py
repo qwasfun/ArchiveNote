@@ -1,22 +1,103 @@
-import os, shutil, mimetypes
-from datetime import datetime
+"""
+文件存储服务
+支持本地存储和 S3 存储
+"""
+import os
+from typing import Tuple
+from fastapi import UploadFile
+from .storage_backend import StorageBackend, LocalStorageBackend, S3StorageBackend
 
-BASE_DIR = "data/files"
+
+def get_storage_backend() -> StorageBackend:
+    """
+    根据环境变量获取存储后端
+    
+    Returns:
+        StorageBackend 实例
+    """
+    storage_type = os.getenv("STORAGE_TYPE", "local").lower()
+    
+    if storage_type == "s3":
+        # S3 存储配置
+        return S3StorageBackend(
+            bucket_name=os.getenv("S3_BUCKET_NAME", ""),
+            access_key=os.getenv("S3_ACCESS_KEY", ""),
+            secret_key=os.getenv("S3_SECRET_KEY", ""),
+            endpoint_url=os.getenv("S3_ENDPOINT_URL") or None,
+            region_name=os.getenv("S3_REGION_NAME", "us-east-1"),
+            public_url=os.getenv("S3_PUBLIC_URL") or None
+        )
+    else:
+        # 默认使用本地存储
+        base_dir = os.getenv("LOCAL_STORAGE_DIR", "data/files")
+        return LocalStorageBackend(base_dir=base_dir)
 
 
-def _normalize_path_to_url(filepath: str) -> str:
-    """将本地文件路径转换为URL友好的格式（使用/作为分隔符）"""
-    return filepath.replace("\\", "/")
+# 全局存储后端实例
+_storage_backend = None
 
 
-def save_file(uploaded_file):
-    date_dir = datetime.now().strftime("%Y%m%d")
-    os.makedirs(os.path.join(BASE_DIR, date_dir), exist_ok=True)
-    filepath = os.path.join(BASE_DIR, date_dir, uploaded_file.filename)
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(uploaded_file.file, buffer)
-    mime_type = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
-    # 转换为URL友好的格式
-    storage_path = _normalize_path_to_url(filepath)
-    size = os.path.getsize(filepath)
-    return storage_path, mime_type, size
+def get_storage() -> StorageBackend:
+    """获取全局存储后端实例（单例模式）"""
+    global _storage_backend
+    if _storage_backend is None:
+        _storage_backend = get_storage_backend()
+    return _storage_backend
+
+
+def save_file(file: UploadFile, user_id: str = None) -> Tuple[str, str, int]:
+    """
+    保存文件（兼容旧接口）
+    
+    Args:
+        file: 上传的文件对象
+        user_id: 用户ID（可选）
+        
+    Returns:
+        Tuple[storage_path, mime_type, size]
+    """
+    storage = get_storage()
+    return storage.save(file, user_id)
+
+
+def delete_file(storage_path: str) -> bool:
+    """
+    删除文件
+    
+    Args:
+        storage_path: 文件存储路径
+        
+    Returns:
+        是否删除成功
+    """
+    storage = get_storage()
+    return storage.delete(storage_path)
+
+
+def file_exists(storage_path: str) -> bool:
+    """
+    检查文件是否存在
+    
+    Args:
+        storage_path: 文件存储路径
+        
+    Returns:
+        文件是否存在
+    """
+    storage = get_storage()
+    return storage.exists(storage_path)
+
+
+def get_download_info(storage_path: str) -> dict:
+    """
+    获取文件下载信息
+    
+    Args:
+        storage_path: 文件存储路径
+        
+    Returns:
+        包含下载所需信息的字典
+    """
+    storage = get_storage()
+    return storage.get_download_info(storage_path)
+

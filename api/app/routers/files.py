@@ -13,7 +13,9 @@ from api.app.schemas import FileResponseModel
 from fastapi.responses import FileResponse
 from api.app.models import User
 from datetime import datetime
-from api.app.services.storage import save_file
+from api.app.services.storage import save_file, delete_file, file_exists, get_download_info, get_storage
+from api.app.services.storage_backend import S3StorageBackend
+import io
 
 router = APIRouter(prefix="/api/v1/files", tags=["Files"])
 
@@ -28,19 +30,8 @@ async def upload_files(
 ):
     results = []
     for file in files:
-        # # Generate safe filename
-        # ext = os.path.splitext(file.filename)[1]
-        # unique_name = f"{uuid.uuid4()}{ext}"
-        # file_path = os.path.join(UPLOAD_DIR, unique_name)
-
-        # # Save to disk
-        # with open(file_path, "wb") as buffer:
-        #     shutil.copyfileobj(file.file, buffer)
-
-        # # Get size
-        # size = os.path.getsize(file_path)
-
-        storage_path, mime_type, size = save_file(file)
+        # 保存文件（传递 user_id 用于组织文件结构）
+        storage_path, mime_type, size = save_file(file, str(current_user.id))
 
         # Save to DB
         new_file = File(
@@ -126,17 +117,15 @@ async def get_file_metadata(file_id: str, db: AsyncSession = Depends(get_async_s
 
 
 @router.delete("/{file_id}")
-async def delete_file(file_id: str, db: AsyncSession = Depends(get_async_session),
+async def delete(file_id: str, db: AsyncSession = Depends(get_async_session),
                       current_user: User = Depends(get_current_user)):
     result = await db.execute(select(File).where((File.id == file_id) & (File.user_id == current_user.id)))
     file = result.scalar_one_or_none()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
 
-    # Delete from disk
-    file_path = os.path.join(UPLOAD_DIR, file.storage_path)
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    # Delete from storage backend
+    delete_file(file.storage_path)
 
     # Delete from DB
     await db.delete(file)
@@ -164,22 +153,54 @@ async def download_file(
 
     # 检查文件是否存在
     storage_path = file_record.storage_path
-    if not os.path.exists(storage_path):
-        raise HTTPException(status_code=404, detail="文件在服务器上不存在")
+    if not file_exists(storage_path):
+        raise HTTPException(status_code=404, detail="文件在存储中不存在")
 
-    # 如果是PDF文件,使用inline方式在浏览器中显示
-    if file_record.mime_type == "application/pdf":
-        # 对文件名进行URL编码以支持中文等非ASCII字符
-        encoded_filename = quote(file_record.filename)
+    # 获取存储后端实例
+    storage = get_storage()
+    
+    # 检查是否为 S3 存储
+    if isinstance(storage, S3StorageBackend):
+        # S3 存储：返回文件内容
+        try:
+            file_content = storage.get_object(storage_path)
+            
+            # 对文件名进行URL编码以支持中文等非ASCII字符
+            encoded_filename = quote(file_record.filename)
+            
+            # 如果是PDF文件，使用inline方式在浏览器中显示
+            if file_record.mime_type == "application/pdf":
+                from fastapi.responses import Response
+                return Response(
+                    content=file_content,
+                    media_type=file_record.mime_type,
+                    headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"}
+                )
+            
+            # 其他文件类型
+            from fastapi.responses import Response
+            return Response(
+                content=file_content,
+                media_type=file_record.mime_type,
+                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"从 S3 获取文件失败: {str(e)}")
+    else:
+        # 本地存储：使用 FileResponse
+        # 如果是PDF文件,使用inline方式在浏览器中显示
+        if file_record.mime_type == "application/pdf":
+            # 对文件名进行URL编码以支持中文等非ASCII字符
+            encoded_filename = quote(file_record.filename)
+            return FileResponse(
+                path=storage_path,
+                filename=file_record.filename,
+                media_type=file_record.mime_type,
+                headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"}
+            )
+        
         return FileResponse(
             path=storage_path,
             filename=file_record.filename,
-            media_type=file_record.mime_type,
-            headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"}
+            media_type=file_record.mime_type
         )
-    
-    return FileResponse(
-        path=storage_path,
-        filename=file_record.filename,
-        media_type=file_record.mime_type
-    )
