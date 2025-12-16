@@ -2,7 +2,7 @@ import service from '@/utils/service'
 
 export default {
   createNote(noteData) {
-    return service.post('/v1/v1/notes/', noteData)
+    return service.post('/v1/notes/', noteData)
   },
   getNotes(params) {
     return service.get('/v1/notes/', { params })
