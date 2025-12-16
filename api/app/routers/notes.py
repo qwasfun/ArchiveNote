@@ -37,6 +37,7 @@ async def create_note(note: NoteCreate,
 @router.get("/")
 async def list_notes(
         q: Optional[str] = None,
+        file_id: Optional[str] = None,
         page: int = Query(1, ge=1, description="页码，从1开始"),
         page_size: int = Query(10, ge=1, le=100, description="每页条数，默认10"),
         db: AsyncSession = Depends(get_async_session),
@@ -49,6 +50,9 @@ async def list_notes(
 
     # 基础查询
     stmt = select(Note).where(Note.user_id == current_user.id).options(selectinload(Note.files))
+
+    if file_id:
+        stmt = stmt.join(Note.files).where(File.id == file_id)
 
     if q:
         # 在标题或内容中搜索

@@ -20,9 +20,9 @@ export default {
     return service.delete(`/v1/notes/${id}`)
   },
   attachFiles(id, fileIds) {
-    return service.post(`/v1/notes/${id}/attach`, fileIds)
+    return service.post(`/v1/notes/${id}/attach`, { file_ids: fileIds })
   },
   detachFiles(id, fileIds) {
-    return service.post(`/v1/notes/${id}/detach`, fileIds)
+    return service.post(`/v1/notes/${id}/detach`, { file_ids: fileIds })
   },
 }

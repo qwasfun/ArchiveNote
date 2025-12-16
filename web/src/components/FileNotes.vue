@@ -142,14 +142,14 @@
               <input
                 v-model="editingNote.title"
                 placeholder="笔记标题..."
-                class="w-full text-lg font-medium bg-transparent border-0 focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                class="w-full px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-lg font-medium bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 placeholder-gray-400"
               />
             </div>
             <div class="flex-1 p-4">
               <textarea
                 v-model="editingNote.content"
-                placeholder="在这里记录您的想法...\n\n您可以引用文件：{{ file.filename }}"
-                class="w-full h-full resize-none bg-transparent border-0 focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                placeholder="在这里记录您的想法..."
+                class="w-full h-64 px-2 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 resize-none"
               ></textarea>
             </div>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2 justify-end">
@@ -276,8 +276,8 @@ const selectNote = (note) => {
 
 const startNewNote = () => {
   editingNote.value = {
-    title: '',
-    content: `关于文件 "${props.file?.filename}" 的笔记：\n\n`,
+    title: `关于文件 "${props.file?.filename}" 的笔记`,
+    content: '',
     file_id: props.file?.id,
   }
   isEditing.value = true
@@ -302,11 +302,14 @@ const saveNote = async () => {
         content: editingNote.value.content,
       })
     } else {
-      await noteService.createNote({
+      const newNote = await noteService.createNote({
         title: editingNote.value.title,
         content: editingNote.value.content,
-        file_id: editingNote.value.file_id,
       })
+
+      if (editingNote.value.file_id) {
+        await noteService.attachFiles(newNote.id, [editingNote.value.file_id])
+      }
     }
 
     isEditing.value = false

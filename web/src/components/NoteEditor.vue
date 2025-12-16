@@ -156,7 +156,11 @@
           </button>
         </div>
         <div class="p-4">
-          <FileSelector @attach-files="handleAttachFiles" @cancel="showFileSelector = false" />
+          <FileSelector
+            :exclude-ids="attachedFiles.map((f) => f.id)"
+            @select="handleAttachFiles"
+            @cancel="showFileSelector = false"
+          />
         </div>
       </div>
     </div>
@@ -254,7 +258,7 @@ const handleAttachFiles = async (fileIds) => {
     await noteService.attachFiles(props.note.id, fileIds)
     // 重新获取笔记信息以更新关联的文件列表
     const response = await noteService.getNote(props.note.id)
-    attachedFiles.value = response.data.files || []
+    attachedFiles.value = response.files || []
   } catch (error) {
     console.error('Failed to attach files', error)
     alert('关联文件失败')

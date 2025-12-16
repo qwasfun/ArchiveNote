@@ -20,18 +20,6 @@ class NoteUpdate(BaseModel):
     visibility: Visibility | None = None
 
 
-class NoteResponse(BaseModel):
-    id: str
-    user_id: str
-    title: str
-    content: str
-    visibility: Visibility
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
 class FileResponseModel(BaseModel):
     id: str
     user_id: str
@@ -43,6 +31,20 @@ class FileResponseModel(BaseModel):
     created_at: datetime
     is_deleted: bool | int = False
     deleted_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class NoteResponse(BaseModel):
+    id: str
+    user_id: str
+    title: str | None
+    content: str
+    visibility: Visibility
+    created_at: datetime
+    updated_at: datetime
+    files: list[FileResponseModel] = []
 
     class Config:
         from_attributes = True
