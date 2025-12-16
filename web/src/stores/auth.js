@@ -13,7 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
   // 设置认证信息
   const setAuth = (authData) => {
     const { access_token, refresh_token, user: userData } = authData
-    
+
     accessToken.value = access_token
     refreshToken.value = refresh_token
     user.value = userData
@@ -49,6 +49,6 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     setAuth,
     clearAuth,
-    updateAccessToken
+    updateAccessToken,
   }
 })

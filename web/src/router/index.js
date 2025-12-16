@@ -29,6 +29,11 @@ const router = createRouter({
       component: FilesView,
     },
     {
+      path: '/recycle',
+      name: 'recycle',
+      component: () => import('../views/files/RecycleBinView.vue'),
+    },
+    {
       path: '/notes',
       name: 'notes',
       component: NotesView,

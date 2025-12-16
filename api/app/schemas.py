@@ -41,12 +41,22 @@ class FileResponseModel(BaseModel):
     mime_type: str
     size: int
     created_at: datetime
+    is_deleted: bool | int = False
+    deleted_at: datetime | None = None
 
     class Config:
         from_attributes = True
 
 
 class FileMove(BaseModel):
+    folder_id: str | None
+
+
+class BatchFileOperation(BaseModel):
+    file_ids: list[str]
+
+
+class BatchFileMove(BatchFileOperation):
     folder_id: str | None
 
 
@@ -69,9 +79,19 @@ class FolderResponse(FolderBase):
     user_id: str
     created_at: datetime
     updated_at: datetime
+    is_deleted: bool | int = False
+    deleted_at: datetime | None = None
 
     class Config:
         from_attributes = True
+
+
+class BatchFolderOperation(BaseModel):
+    folder_ids: list[str]
+
+
+class BatchFolderMove(BatchFolderOperation):
+    parent_id: str | None
 
 
 class UserResponse(BaseModel):

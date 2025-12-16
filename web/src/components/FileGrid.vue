@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-defineProps({
+const props = defineProps({
   files: {
     type: Array,
     required: true,
@@ -11,9 +11,72 @@ defineProps({
     type: Array,
     default: () => [],
   },
+  selectionMode: {
+    type: Boolean,
+    default: false,
+  },
+  selectedFiles: {
+    type: Array,
+    default: () => [],
+  },
+  selectedFolders: {
+    type: Array,
+    default: () => [],
+  },
 })
 
-defineEmits(['delete-file', 'preview-file', 'add-note', 'view-notes', 'open-folder', 'delete-folder', 'edit-folder'])
+const emit = defineEmits([
+  'delete-file',
+  'preview-file',
+  'add-note',
+  'view-notes',
+  'open-folder',
+  'delete-folder',
+  'edit-folder',
+  'selection-change',
+])
+
+const localSelectedFiles = ref([...props.selectedFiles])
+const localSelectedFolders = ref([...props.selectedFolders])
+
+watch(
+  () => props.selectedFiles,
+  (newVal) => {
+    localSelectedFiles.value = [...newVal]
+  },
+)
+
+watch(
+  () => props.selectedFolders,
+  (newVal) => {
+    localSelectedFolders.value = [...newVal]
+  },
+)
+
+const toggleFileSelection = (fileId) => {
+  if (localSelectedFiles.value.includes(fileId)) {
+    localSelectedFiles.value = localSelectedFiles.value.filter((id) => id !== fileId)
+  } else {
+    localSelectedFiles.value.push(fileId)
+  }
+  emitSelection()
+}
+
+const toggleFolderSelection = (folderId) => {
+  if (localSelectedFolders.value.includes(folderId)) {
+    localSelectedFolders.value = localSelectedFolders.value.filter((id) => id !== folderId)
+  } else {
+    localSelectedFolders.value.push(folderId)
+  }
+  emitSelection()
+}
+
+const emitSelection = () => {
+  emit('selection-change', {
+    files: localSelectedFiles.value,
+    folders: localSelectedFolders.value,
+  })
+}
 
 const hoveredFile = ref(null)
 const hoveredFolder = ref(null)
@@ -69,9 +132,19 @@ const getFileTypeColor = (mimeType) => {
           @mouseenter="hoveredFolder = folder.id"
           @mouseleave="hoveredFolder = null"
         >
+          <div class="absolute top-2 left-2 z-10" v-if="selectionMode">
+            <input
+              type="checkbox"
+              :checked="localSelectedFolders.includes(folder.id)"
+              @click.stop="toggleFolderSelection(folder.id)"
+              class="checkbox checkbox-sm checkbox-primary"
+            />
+          </div>
           <div class="flex flex-col items-center p-2">
             <div class="text-5xl mb-3 text-yellow-400">📁</div>
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate w-full text-center">
+            <div
+              class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate w-full text-center"
+            >
               {{ folder.name }}
             </div>
           </div>
@@ -129,17 +202,28 @@ const getFileTypeColor = (mimeType) => {
 
     <!-- Files Section -->
     <div v-if="files.length > 0">
-      <h3 v-if="folders.length > 0" class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center">
+      <h3
+        v-if="files.length > 0"
+        class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center"
+      >
         <span class="mr-2">📄</span> Files
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div
           v-for="file in files"
           :key="file.id"
-          class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
+          class="relative group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
           @mouseenter="hoveredFile = file.id"
           @mouseleave="hoveredFile = null"
         >
+          <div class="absolute top-2 left-2 z-10" v-if="selectionMode">
+            <input
+              type="checkbox"
+              :checked="localSelectedFiles.includes(file.id)"
+              @click.stop="toggleFileSelection(file.id)"
+              class="checkbox checkbox-sm checkbox-primary"
+            />
+          </div>
           <!-- 文件预览区域 -->
           <div
             class="relative h-48 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"

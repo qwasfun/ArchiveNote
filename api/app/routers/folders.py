@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_async_session
 from app.models import Folder, User
-from app.schemas import FolderCreate, FolderUpdate, FolderResponse
+from app.schemas import FolderCreate, FolderUpdate, FolderResponse, BatchFolderMove, BatchFolderOperation
 from app.services.security import get_current_user
 from datetime import datetime
 from app.models import File
@@ -36,7 +36,7 @@ async def list_folders(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
-    stmt = select(Folder).where(Folder.user_id == current_user.id)
+    stmt = select(Folder).where(Folder.user_id == current_user.id, Folder.is_deleted == 0)
     if parent_id:
         stmt = stmt.where(Folder.parent_id == parent_id)
     else:
@@ -98,29 +98,51 @@ async def delete_folder(
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     
-    # Recursively delete all child folders and files
-    async def delete_folder_recursive(folder_to_delete: Folder):
-        # Find and delete all child folders
-        child_folders_stmt = select(Folder).where(Folder.parent_id == folder_to_delete.id)
-        child_folders_result = await db.execute(child_folders_stmt)
-        child_folders = child_folders_result.scalars().all()
-        
-        for child_folder in child_folders:
-            await delete_folder_recursive(child_folder)
-        
-        # Delete all files in this folder (assuming File model exists)
-        files_stmt = select(File).where(File.folder_id == folder_to_delete.id)
-        files_result = await db.execute(files_stmt)
-        files = files_result.scalars().all()
-        
-        for file in files:
-            await db.delete(file)
-            # Delete from storage backend
-            delete_file(file.storage_path)
-        
-        # Delete the folder itself
-        await db.delete(folder_to_delete)
-    
-    await delete_folder_recursive(folder)
+    folder.is_deleted = 1
+    folder.deleted_at = datetime.utcnow()
     await db.commit()
-    return {"message": "Folder deleted"}
+    return {"message": "Folder moved to recycle bin"}
+
+
+@router.post("/batch/move")
+async def batch_move_folders(
+    batch_move: BatchFolderMove,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    if batch_move.parent_id:
+        parent_stmt = select(Folder).where(Folder.id == batch_move.parent_id, Folder.user_id == current_user.id)
+        parent_res = await db.execute(parent_stmt)
+        if not parent_res.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Target parent folder not found")
+
+    stmt = select(Folder).where(Folder.id.in_(batch_move.folder_ids), Folder.user_id == current_user.id)
+    result = await db.execute(stmt)
+    folders = result.scalars().all()
+    
+    for folder in folders:
+        # Prevent moving a folder into itself or its children (basic check)
+        if folder.id == batch_move.parent_id:
+             continue # Skip invalid move
+        folder.parent_id = batch_move.parent_id
+    
+    await db.commit()
+    return {"message": f"Moved {len(folders)} folders"}
+
+
+@router.post("/batch/delete")
+async def batch_delete_folders(
+    batch_op: BatchFolderOperation,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    stmt = select(Folder).where(Folder.id.in_(batch_op.folder_ids), Folder.user_id == current_user.id)
+    result = await db.execute(stmt)
+    folders = result.scalars().all()
+    
+    for folder in folders:
+        folder.is_deleted = 1
+        folder.deleted_at = datetime.utcnow()
+    
+    await db.commit()
+    return {"message": f"Moved {len(folders)} folders to recycle bin"}

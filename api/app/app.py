@@ -7,7 +7,7 @@ from app.database import create_db_and_tables
 
 from contextlib import asynccontextmanager
 
-from app.routers import users, auth, files, notes, folders
+from app.routers import users, auth, files, notes, folders, recycle
 
 
 @asynccontextmanager
@@ -23,6 +23,7 @@ app.include_router(users.router)
 app.include_router(files.router)
 app.include_router(notes.router)
 app.include_router(folders.router)
+app.include_router(recycle.router)
 
 
 # app.include_router(immich.router)

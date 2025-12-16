@@ -16,4 +16,10 @@ export default {
   deleteFolder(id) {
     return service.delete(`/v1/folders/${id}`)
   },
+  batchMoveFolders(data) {
+    return service.post('/v1/folders/batch/move', data)
+  },
+  batchDeleteFolders(data) {
+    return service.post('/v1/folders/batch/delete', data)
+  },
 }

@@ -15,10 +15,10 @@ service.interceptors.request.use(
     // 从 Pinia store 获取 token
     const authStore = useAuthStore()
     const access_token = authStore.accessToken
-    
+
     // 检查当前请求路径是否需要认证
-    const isNoAuthPath = noAuthPaths.some(path => config.url.includes(path))
-    
+    const isNoAuthPath = noAuthPaths.some((path) => config.url.includes(path))
+
     if (!isNoAuthPath && access_token) {
       // 请求头里添加 access_token
       config.headers.Authorization = `Bearer ${access_token}`

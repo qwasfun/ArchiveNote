@@ -25,6 +25,8 @@ class Folder(Base):
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_deleted = Column(Integer, default=0)  # 0: False, 1: True. Using Integer for boolean behavior in some DBs or just standardizing
+    deleted_at = Column(DateTime, nullable=True)
 
     # Relationships
     files = relationship("File", back_populates="folder")
@@ -51,6 +53,8 @@ class File(Base):
     mime_type: Mapped[str] = mapped_column(String, nullable=False)
     size: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    is_deleted: Mapped[bool] = mapped_column(Integer, default=0)
+    deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to Folder
     folder = relationship("Folder", back_populates="files")

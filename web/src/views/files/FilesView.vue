@@ -24,6 +24,92 @@ const showNotes = ref(false)
 const searchQuery = ref('')
 const filterType = ref('all')
 
+const selectedFiles = ref([])
+const selectedFolders = ref([])
+const isSelectionMode = ref(false)
+const showBatchMoveModal = ref(false)
+const moveTargetFolderId = ref(null)
+const allFolders = ref([])
+
+const toggleSelectionMode = () => {
+  isSelectionMode.value = !isSelectionMode.value
+  selectedFiles.value = []
+  selectedFolders.value = []
+}
+
+const handleSelectionChange = (selection) => {
+  selectedFiles.value = selection.files
+  selectedFolders.value = selection.folders
+}
+
+const batchDelete = async () => {
+  if (
+    !confirm(
+      `Are you sure you want to delete ${selectedFiles.value.length} files and ${selectedFolders.value.length} folders?`,
+    )
+  )
+    return
+
+  try {
+    if (selectedFiles.value.length > 0) {
+      await fileService.batchDeleteFiles({ file_ids: selectedFiles.value })
+    }
+    if (selectedFolders.value.length > 0) {
+      await folderService.batchDeleteFolders({ folder_ids: selectedFolders.value })
+    }
+    await loadData()
+    selectedFiles.value = []
+    selectedFolders.value = []
+    isSelectionMode.value = false
+  } catch (error) {
+    console.error('Batch delete failed', error)
+  }
+}
+
+const openBatchMoveModal = async () => {
+  try {
+    // Ideally we should fetch a tree or all folders.
+    // For now, let's just fetch root folders or current level?
+    // A proper folder selector is complex.
+    // Let's just fetch all folders for now (might be heavy if many folders)
+    // Or just fetch root and allow navigation?
+    // Let's stick to a simple flat list of all folders for MVP if possible, or just root.
+    // Actually, getFolders takes parent_id. If we want all, we might need a new endpoint or recursive fetch.
+    // Let's just show root folders for now and maybe allow drilling down later?
+    // Or just use a text input for folder ID for now? No that's bad UX.
+    // Let's fetch root folders.
+    const res = await folderService.getFolders({})
+    allFolders.value = res
+    showBatchMoveModal.value = true
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const confirmBatchMove = async () => {
+  try {
+    if (selectedFiles.value.length > 0) {
+      await fileService.batchMoveFiles({
+        file_ids: selectedFiles.value,
+        folder_id: moveTargetFolderId.value,
+      })
+    }
+    if (selectedFolders.value.length > 0) {
+      await folderService.batchMoveFolders({
+        folder_ids: selectedFolders.value,
+        parent_id: moveTargetFolderId.value,
+      })
+    }
+    showBatchMoveModal.value = false
+    await loadData()
+    selectedFiles.value = []
+    selectedFolders.value = []
+    isSelectionMode.value = false
+  } catch (error) {
+    console.error('Batch move failed', error)
+  }
+}
+
 const loadData = async () => {
   loading.value = true
   try {
@@ -31,18 +117,18 @@ const loadData = async () => {
     if (currentFolderId.value) {
       params.folder_id = currentFolderId.value
     }
-    
+
     // Load folders
     const folderParams = {}
     if (currentFolderId.value) {
       folderParams.parent_id = currentFolderId.value
     }
-    
+
     const [filesRes, foldersRes] = await Promise.all([
       fileService.getFiles(params),
-      folderService.getFolders(folderParams)
+      folderService.getFolders(folderParams),
     ])
-    
+
     files.value = filesRes.data || [] // Assuming pagination structure
     folders.value = foldersRes || []
   } catch (error) {
@@ -54,11 +140,11 @@ const loadData = async () => {
 
 const createFolder = async () => {
   if (!newFolderName.value.trim()) return
-  
+
   try {
     await folderService.createFolder({
       name: newFolderName.value,
-      parent_id: currentFolderId.value
+      parent_id: currentFolderId.value,
     })
     newFolderName.value = ''
     showCreateFolderModal.value = false
@@ -76,10 +162,10 @@ const openRenameFolderModal = (folder) => {
 
 const renameFolder = async () => {
   if (!renameFolderName.value.trim()) return
-  
+
   try {
     await folderService.updateFolder(editingFolder.value.id, {
-      name: renameFolderName.value
+      name: renameFolderName.value,
     })
     showRenameFolderModal.value = false
     editingFolder.value = null
@@ -90,8 +176,9 @@ const renameFolder = async () => {
 }
 
 const deleteFolder = async (folder) => {
-  if (!confirm(`Are you sure you want to delete folder "${folder.name}" and all its contents?`)) return
-  
+  if (!confirm(`Are you sure you want to delete folder "${folder.name}" and all its contents?`))
+    return
+
   try {
     await folderService.deleteFolder(folder.id)
     await loadData()
@@ -207,9 +294,43 @@ onMounted(() => {
             </p>
           </div>
           <div class="flex gap-2">
+            <button
+              @click="toggleSelectionMode"
+              class="btn"
+              :class="isSelectionMode ? 'btn-secondary' : 'btn-ghost'"
+            >
+              {{ isSelectionMode ? '取消选择' : '批量选择' }}
+            </button>
+            <div v-if="isSelectionMode" class="flex gap-2">
+              <button
+                @click="batchDelete"
+                class="btn btn-error"
+                :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+              >
+                删除
+              </button>
+              <button
+                @click="openBatchMoveModal"
+                class="btn btn-info"
+                :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+              >
+                移动
+              </button>
+            </div>
             <button @click="showCreateFolderModal = true" class="btn btn-primary gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
               </svg>
               新建文件夹
             </button>
@@ -232,20 +353,26 @@ onMounted(() => {
       <div class="text-sm breadcrumbs mb-4">
         <ul>
           <li v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
-            <a @click="navigateBreadcrumb(index)" :class="{'font-bold': index === breadcrumbs.length - 1}">
+            <a
+              @click="navigateBreadcrumb(index)"
+              :class="{ 'font-bold': index === breadcrumbs.length - 1 }"
+            >
               {{ crumb.name }}
             </a>
           </li>
         </ul>
       </div>
       <!-- Rename Folder Modal -->
-      <div v-if="showRenameFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div
+        v-if="showRenameFolderModal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
           <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">重命名文件夹</h3>
-          <input 
-            v-model="renameFolderName" 
-            type="text" 
-            placeholder="Folder Name" 
+          <input
+            v-model="renameFolderName"
+            type="text"
+            placeholder="Folder Name"
             class="input input-bordered w-full mb-4"
             @keyup.enter="renameFolder"
             autoFocus
@@ -257,15 +384,17 @@ onMounted(() => {
         </div>
       </div>
 
-
       <!-- Create Folder Modal -->
-      <div v-if="showCreateFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div
+        v-if="showCreateFolderModal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
           <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">新建文件夹</h3>
-          <input 
-            v-model="newFolderName" 
-            type="text" 
-            placeholder="Folder Name" 
+          <input
+            v-model="newFolderName"
+            type="text"
+            placeholder="Folder Name"
             class="input input-bordered w-full mb-4"
             @keyup.enter="createFolder"
             autoFocus
@@ -322,7 +451,7 @@ onMounted(() => {
             <div class="flex gap-2 flex-wrap">
               <select
                 v-model="filterType"
-                class="select select-bordered select-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                class="select select-bordered bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
               >
                 <option value="all">📁 所有文件</option>
                 <option value="image">🖼️ 图片</option>
@@ -389,6 +518,10 @@ onMounted(() => {
           <FileGrid
             :files="filteredFiles"
             :folders="folders"
+            :selection-mode="isSelectionMode"
+            :selected-files="selectedFiles"
+            :selected-folders="selectedFolders"
+            @selection-change="handleSelectionChange"
             @delete-file="handleDelete"
             @preview-file="handlePreview"
             @add-note="handleAddNote"
@@ -411,5 +544,25 @@ onMounted(() => {
       @close="closeNotes"
       @note-created="handleNoteCreated"
     />
+
+    <!-- Batch Move Modal -->
+    <div
+      v-if="showBatchMoveModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
+        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">移动到...</h3>
+        <select v-model="moveTargetFolderId" class="select select-bordered w-full mb-4">
+          <option :value="null">根目录</option>
+          <option v-for="folder in allFolders" :key="folder.id" :value="folder.id">
+            {{ folder.name }}
+          </option>
+        </select>
+        <div class="flex justify-end gap-2">
+          <button @click="showBatchMoveModal = false" class="btn btn-ghost">取消</button>
+          <button @click="confirmBatchMove" class="btn btn-primary">移动</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

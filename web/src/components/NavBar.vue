@@ -48,6 +48,18 @@
             >
               <span class="flex items-center gap-2"> 📝 笔记管理 </span>
             </RouterLink>
+            <RouterLink
+              to="/recycle"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="{
+                'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
+                  $route.path === '/recycle',
+                'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800':
+                  $route.path !== '/recycle',
+              }"
+            >
+              <span class="flex items-center gap-2"> 🗑️ 回收站 </span>
+            </RouterLink>
           </nav>
         </div>
 

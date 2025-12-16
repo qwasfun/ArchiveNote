@@ -18,4 +18,10 @@ export default {
   moveFile(id, data) {
     return service.put(`/v1/files/${id}/move`, data)
   },
+  batchMoveFiles(data) {
+    return service.post('/v1/files/batch/move', data)
+  },
+  batchDeleteFiles(data) {
+    return service.post('/v1/files/batch/delete', data)
+  },
 }

@@ -6,7 +6,7 @@ from sqlalchemy import select, or_, func
 from app.database import get_async_session
 from app.models import File, Folder
 from app.services.security import get_current_user
-from app.schemas import FileResponseModel, FileMove
+from app.schemas import FileResponseModel, FileMove, BatchFileMove, BatchFileOperation
 from fastapi.responses import FileResponse
 from app.models import User
 from datetime import datetime
@@ -90,7 +90,7 @@ async def list_files(
     # 计算偏移量
     offset = (page - 1) * page_size
 
-    stmt = select(File).where(File.user_id == current_user.id)
+    stmt = select(File).where(File.user_id == current_user.id, File.is_deleted == 0)
 
     if folder_id:
         stmt = stmt.where(File.folder_id == folder_id)
@@ -233,3 +233,62 @@ async def download_file(
             filename=file_record.filename,
             media_type=file_record.mime_type
         )
+
+
+@router.delete("/{file_id}")
+async def delete_file_soft(
+    file_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    stmt = select(File).where(File.id == file_id, File.user_id == current_user.id)
+    result = await db.execute(stmt)
+    file = result.scalar_one_or_none()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file.is_deleted = 1
+    file.deleted_at = datetime.utcnow()
+    await db.commit()
+    return {"message": "File moved to recycle bin"}
+
+
+@router.post("/batch/move")
+async def batch_move_files(
+    batch_move: BatchFileMove,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    if batch_move.folder_id:
+        folder_stmt = select(Folder).where(Folder.id == batch_move.folder_id, Folder.user_id == current_user.id)
+        folder_res = await db.execute(folder_stmt)
+        if not folder_res.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Target folder not found")
+
+    stmt = select(File).where(File.id.in_(batch_move.file_ids), File.user_id == current_user.id)
+    result = await db.execute(stmt)
+    files = result.scalars().all()
+    
+    for file in files:
+        file.folder_id = batch_move.folder_id
+    
+    await db.commit()
+    return {"message": f"Moved {len(files)} files"}
+
+
+@router.post("/batch/delete")
+async def batch_delete_files(
+    batch_op: BatchFileOperation,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    stmt = select(File).where(File.id.in_(batch_op.file_ids), File.user_id == current_user.id)
+    result = await db.execute(stmt)
+    files = result.scalars().all()
+    
+    for file in files:
+        file.is_deleted = 1
+        file.deleted_at = datetime.utcnow()
+    
+    await db.commit()
+    return {"message": f"Moved {len(files)} files to recycle bin"}
