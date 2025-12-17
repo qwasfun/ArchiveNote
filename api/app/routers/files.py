@@ -80,6 +80,7 @@ async def move_file(
 async def list_files(
         folder_id: Optional[str] = None,
         q: Optional[str] = None,
+        file_type: Optional[str] = Query(None, description="文件类型过滤: image, video, audio, document, pdf"),
         page: int = Query(1, ge=1, description="页码，从1开始"),
         page_size: int = Query(10, ge=1, le=100, description="每页条数，默认10"),
         db: AsyncSession = Depends(get_async_session),
@@ -99,6 +100,18 @@ async def list_files(
 
     if q:
         stmt = stmt.where(File.filename.ilike(f"%{q}%"))
+
+    if file_type:
+        if file_type == 'image':
+            stmt = stmt.where(File.mime_type.like("image/%"))
+        elif file_type == 'video':
+            stmt = stmt.where(File.mime_type.like("video/%"))
+        elif file_type == 'audio':
+            stmt = stmt.where(File.mime_type.like("audio/%"))
+        elif file_type == 'pdf':
+            stmt = stmt.where(File.mime_type == "application/pdf")
+        elif file_type == 'document':
+            stmt = stmt.where(or_(File.mime_type.like("%document%"), File.mime_type.like("%word%")))
 
     query = stmt.offset(offset).limit(page_size).order_by(
         File.created_at.desc()

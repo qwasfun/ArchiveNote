@@ -8,17 +8,32 @@ const loading = ref(false)
 const selectedNote = ref(null)
 const isEditing = ref(false)
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalNotes = ref(0)
+const totalPages = ref(0)
+
 const loadNotes = async () => {
   loading.value = true
   try {
-    const response = await noteService.getNotes()
+    const response = await noteService.getNotes({
+      page: currentPage.value,
+      page_size: pageSize.value,
+    })
 
     notes.value = response.data
+    totalNotes.value = response.total
+    totalPages.value = response.total_pages
   } catch (error) {
     console.error('Failed to load notes', error)
   } finally {
     loading.value = false
   }
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadNotes()
 }
 
 const handleCreate = () => {
@@ -83,7 +98,7 @@ onMounted(async () => {
           <span class="loading loading-spinner"></span>
         </div>
 
-        <div v-else class="flex-1 overflow-y-auto space-y-2 p-2" >
+        <div v-else class="flex-1 overflow-y-auto space-y-2 p-2">
           <div
             v-for="note in notes"
             :key="note.id"
@@ -105,6 +120,26 @@ onMounted(async () => {
 
           <div v-if="notes.length === 0 && !loading" class="text-center text-base-content/50 py-8">
             No notes found.
+          </div>
+        </div>
+
+        <div class="p-2 border-t border-base-200" v-if="totalPages > 1">
+          <div class="join flex justify-center">
+            <button
+              class="join-item btn btn-sm"
+              :disabled="currentPage === 1"
+              @click="handlePageChange(currentPage - 1)"
+            >
+              «
+            </button>
+            <button class="join-item btn btn-sm">Page {{ currentPage }}</button>
+            <button
+              class="join-item btn btn-sm"
+              :disabled="currentPage === totalPages"
+              @click="handlePageChange(currentPage + 1)"
+            >
+              »
+            </button>
           </div>
         </div>
       </div>

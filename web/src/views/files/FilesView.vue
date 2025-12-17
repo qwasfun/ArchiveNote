@@ -24,6 +24,11 @@ const showNotes = ref(false)
 const searchQuery = ref('')
 const filterType = ref('all')
 
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalFiles = ref(0)
+const totalPages = ref(0)
+
 const selectedFiles = ref([])
 const selectedFolders = ref([])
 const isSelectionMode = ref(false)
@@ -113,7 +118,12 @@ const confirmBatchMove = async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    const params = {}
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value,
+      q: searchQuery.value,
+      file_type: filterType.value === 'all' ? undefined : filterType.value,
+    }
     if (currentFolderId.value) {
       params.folder_id = currentFolderId.value
     }
@@ -129,7 +139,9 @@ const loadData = async () => {
       folderService.getFolders(folderParams),
     ])
 
-    files.value = filesRes.data || [] // Assuming pagination structure
+    files.value = filesRes.data || []
+    totalFiles.value = filesRes.total || 0
+    totalPages.value = filesRes.total_pages || 0
     folders.value = foldersRes || []
   } catch (error) {
     console.error('Failed to load data', error)
@@ -137,6 +149,16 @@ const loadData = async () => {
     loading.value = false
   }
 }
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+watch([searchQuery, filterType], () => {
+  currentPage.value = 1
+  loadData()
+})
 
 const createFolder = async () => {
   if (!newFolderName.value.trim()) return
@@ -199,38 +221,6 @@ const navigateBreadcrumb = async (index) => {
   breadcrumbs.value = breadcrumbs.value.slice(0, index + 1)
   await loadData()
 }
-
-const filteredFiles = computed(() => {
-  let result = files.value
-
-  // 按类型过滤
-  if (filterType.value !== 'all') {
-    result = result.filter((file) => {
-      switch (filterType.value) {
-        case 'image':
-          return file.mime_type.startsWith('image/')
-        case 'video':
-          return file.mime_type.startsWith('video/')
-        case 'pdf':
-          return file.mime_type === 'application/pdf'
-        case 'audio':
-          return file.mime_type.startsWith('audio/')
-        case 'document':
-          return file.mime_type.includes('document') || file.mime_type.includes('word')
-        default:
-          return true
-      }
-    })
-  }
-
-  // 按名称搜索
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter((file) => file.filename.toLowerCase().includes(query))
-  }
-
-  return result
-})
 
 const handleUploadSuccess = async () => {
   await loadData()
@@ -468,9 +458,10 @@ onMounted(() => {
             class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
           >
             <span class="text-sm text-gray-500">
-              显示 {{ filteredFiles.length }} / {{ files.length }} 个文件
+              显示 {{ files.length }} / {{ totalFiles }} 个文件
             </span>
             <div class="flex gap-2 text-xs text-gray-500">
+              <!-- Note: These counts are now only for the current page unless we fetch stats separately -->
               <span>🖼️ {{ files.filter((f) => f.mime_type.startsWith('image/')).length }}</span>
               <span>🎥 {{ files.filter((f) => f.mime_type.startsWith('video/')).length }}</span>
               <span>📄 {{ files.filter((f) => f.mime_type === 'application/pdf').length }}</span>
@@ -490,7 +481,9 @@ onMounted(() => {
         </div>
 
         <div
-          v-else-if="filteredFiles.length === 0 && files.length === 0 && folders.length === 0"
+          v-else-if="
+            totalFiles === 0 && folders.length === 0 && !searchQuery && filterType === 'all'
+          "
           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700"
         >
           <div class="text-6xl mb-4">📂</div>
@@ -500,7 +493,7 @@ onMounted(() => {
         </div>
 
         <div
-          v-else-if="filteredFiles.length === 0 && folders.length === 0"
+          v-else-if="files.length === 0 && folders.length === 0"
           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700"
         >
           <div class="text-6xl mb-4">🔍</div>
@@ -516,7 +509,7 @@ onMounted(() => {
           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
         >
           <FileGrid
-            :files="filteredFiles"
+            :files="files"
             :folders="folders"
             :selection-mode="isSelectionMode"
             :selected-files="selectedFiles"
@@ -530,6 +523,27 @@ onMounted(() => {
             @delete-folder="deleteFolder"
             @edit-folder="openRenameFolderModal"
           />
+
+          <!-- Pagination -->
+          <div class="flex justify-center mt-6" v-if="totalPages > 1">
+            <div class="join">
+              <button
+                class="join-item btn"
+                :disabled="currentPage === 1"
+                @click="handlePageChange(currentPage - 1)"
+              >
+                «
+              </button>
+              <button class="join-item btn">Page {{ currentPage }} of {{ totalPages }}</button>
+              <button
+                class="join-item btn"
+                :disabled="currentPage === totalPages"
+                @click="handlePageChange(currentPage + 1)"
+              >
+                »
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
