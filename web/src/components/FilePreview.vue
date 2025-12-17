@@ -195,7 +195,10 @@ const formatSize = (bytes) => {
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString()
+  if (!dateString) return ''
+  const dateStr =
+    dateString.endsWith('Z') || dateString.includes('+') ? dateString : dateString + 'Z'
+  return new Date(dateStr).toLocaleString()
 }
 
 const getFileIcon = (mimeType) => {

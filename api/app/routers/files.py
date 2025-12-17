@@ -38,7 +38,7 @@ async def upload_files(
             storage_path=storage_path,
             mime_type=mime_type,
             size=size,
-            created_at=datetime.now()
+            created_at=datetime.utcnow()
         )
         db.add(new_file)
         results.append(new_file)
