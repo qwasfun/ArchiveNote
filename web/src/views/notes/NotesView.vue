@@ -90,13 +90,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="bg-gray-50 dark:bg-gray-900 h-[calc(100vh-64px)]">
     <div class="container mx-auto px-4 py-6 h-full flex">
       <!-- Notes List Sidebar -->
       <div class="w-1/3 flex flex-col h-full">
-        <div class="flex justify-between items-center mb-4">
-          <h1 class="text-2xl font-bold">Notes</h1>
-          <button class="btn btn-primary btn-sm" @click="handleCreate">New Note</button>
+        <div class="flex justify-between items-center mb-4 px-2">
+          <div>
+            <h1 class="text-3xl font-bold">📝 笔记管理</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">管理您的笔记</p>
+          </div>
+          <button class="btn btn-primary btn-sm" @click="handleCreate">新建笔记</button>
         </div>
 
         <div v-if="loading && notes.length === 0" class="flex justify-center p-4">
@@ -150,7 +153,7 @@ onMounted(async () => {
       </div>
 
       <!-- main Content / Editor -->
-      <div class="flex-1 h-full">
+      <div class="flex-1 h-full ml-4">
         <NoteEditor
           v-if="isEditing"
           :note="selectedNote"
