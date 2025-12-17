@@ -21,6 +21,11 @@ const loadNotes = async () => {
       page_size: pageSize.value,
     })
 
+    if ((response.data || []).length === 0 && currentPage.value > 1) {
+      currentPage.value = 1
+      return loadNotes()
+    }
+
     notes.value = response.data
     totalNotes.value = response.total
     totalPages.value = response.total_pages

@@ -139,6 +139,11 @@ const loadData = async () => {
       folderService.getFolders(folderParams),
     ])
 
+    if ((filesRes.data || []).length === 0 && currentPage.value > 1) {
+      currentPage.value = 1
+      return loadData()
+    }
+
     files.value = filesRes.data || []
     totalFiles.value = filesRes.total || 0
     totalPages.value = filesRes.total_pages || 0
