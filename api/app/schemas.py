@@ -31,6 +31,7 @@ class FileResponseModel(BaseModel):
     created_at: datetime
     is_deleted: bool | int = False
     deleted_at: datetime | None = None
+    notes_count: int = 0
 
     class Config:
         from_attributes = True

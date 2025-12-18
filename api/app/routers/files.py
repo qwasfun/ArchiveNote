@@ -139,6 +139,7 @@ async def list_files(
                 "size": f.size,
                 "storage_path": f.storage_path,
                 "download_url": get_public_url(f.storage_path) or f"/api/v1/files/download/{f.id}/{f.filename}",
+                "notes_count": f.notes_count,
                 "mime_type": f.mime_type,
                 "created_at": f.created_at
             }

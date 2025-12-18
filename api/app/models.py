@@ -66,6 +66,10 @@ class File(Base):
         lazy="selectin"
     )
 
+    @property
+    def notes_count(self) -> int:
+        return len(self.notes)
+
 
 class Note(Base):
     __tablename__ = "notes"
