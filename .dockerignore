@@ -4,3 +4,4 @@ web/node_modules
 *.md
 dist
 api/.venv
+api/data
