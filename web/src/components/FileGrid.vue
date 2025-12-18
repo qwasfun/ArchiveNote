@@ -264,31 +264,22 @@ const isImage = (mimeType) => mimeType.startsWith('image/')
 
           <!-- 文件信息 -->
           <div class="p-4 space-y-3">
-            <div class="flex items-start justify-between">
+            <div class="flex items-center justify-between">
               <h3
                 class="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 flex-1 mr-2"
                 :title="file.filename"
               >
                 {{ file.filename }}
               </h3>
-              <div class="shrink-0">
-                <button
-                  @click="$emit('view-notes', file)"
-                  class="btn btn-xs btn-ghost btn-circle text-gray-400 hover:text-blue-500"
-                  :class="{ 'text-blue-500': file.notes_count > 0 }"
-                  :title="`查看笔记 (${file.notes_count || 0})`"
-                >
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
-                    <path
-                      fill-rule="evenodd"
-                      d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 014 11.5V5z"
-                      clip-rule="evenodd"
-                    ></path>
-                  </svg>
-                  <span v-if="file.notes_count > 0" class="text-xs">{{ file.notes_count }}</span>
-                </button>
-              </div>
+              <button
+                @click="$emit('view-notes', file)"
+                class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
+                :class="{ 'text-blue-500': file.notes_count > 0 }"
+                :title="`查看笔记 (${file.notes_count || 0})`"
+              >
+                📝
+                <span v-if="file.notes_count > 0" class="text-xs">{{ file.notes_count }}</span>
+              </button>
             </div>
 
             <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

@@ -170,11 +170,9 @@
               <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {{ selectedNote.title }}
               </h3>
-              <div class="text-sm text-gray-500 mb-4">
-                创建于 {{ formatDate(selectedNote.created_at) }}
-                <span v-if="selectedNote.updated_at !== selectedNote.created_at">
-                  · 更新于 {{ formatDate(selectedNote.updated_at) }}
-                </span>
+              <div class="text-sm text-gray-500 mb-4 flex gap-4">
+                <span>📅 创建于 {{ formatDate(selectedNote.created_at) }}</span>
+                <span>🔄 更新于 {{ formatDate(selectedNote.updated_at) }}</span>
               </div>
               <div class="prose prose-sm max-w-none dark:prose-invert">
                 <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-300">{{

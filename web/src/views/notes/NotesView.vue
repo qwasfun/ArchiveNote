@@ -2,13 +2,18 @@
 import { ref, onMounted } from 'vue'
 import noteService from '../../api/noteService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
-import { formatDate } from '@/utils/format'
+import FilePreview from '../../components/FilePreview.vue'
+import { formatDate, formatSize } from '@/utils/format'
+import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
 const notes = ref([])
 const loading = ref(false)
 const selectedNote = ref(null)
 const isEditing = ref(false)
 const isViewing = ref(false)
+
+const previewFile = ref(null)
+const showFilePreview = ref(false)
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -65,15 +70,25 @@ const handleEdit = (note) => {
 
 const handleSave = async (noteData) => {
   try {
+    let savedNoteId
     if (selectedNote.value && selectedNote.value.id) {
       await noteService.updateNote(selectedNote.value.id, noteData)
+      savedNoteId = selectedNote.value.id
     } else {
-      await noteService.createNote(noteData)
+      const response = await noteService.createNote(noteData)
+      savedNoteId = response.id
     }
-    isEditing.value = false
-    isViewing.value = false
-    selectedNote.value = null
+
+    // 重新加载笔记列表
     await loadNotes()
+
+    // 找到刚保存的笔记并显示预览
+    const savedNote = notes.value.find((note) => note.id === savedNoteId)
+    if (savedNote) {
+      selectedNote.value = { ...savedNote }
+      isEditing.value = false
+      isViewing.value = true
+    }
   } catch (error) {
     console.error('Failed to save note', error)
   }
@@ -100,8 +115,17 @@ const handleCancel = () => {
     selectedNote.value = null
   } else {
     isViewing.value = true
-    console.error('Failed to delete note', error)
   }
+}
+
+const handleFileClick = (file) => {
+  previewFile.value = file
+  showFilePreview.value = true
+}
+
+const handleClosePreview = () => {
+  showFilePreview.value = false
+  previewFile.value = null
 }
 
 onMounted(async () => {
@@ -142,8 +166,11 @@ onMounted(async () => {
               <p class="text-xs text-base-content/60 line-clamp-2">{{ note.content }}</p>
               <div class="flex justify-between items-center mt-2">
                 <span class="text-xs text-base-content/40">{{ formatDate(note.updated_at) }}</span>
-                <button class="btn btn-ghost btn-xs text-error" @click.stop="handleDelete(note.id)">
-                  删除
+                <button
+                  class="btn btn-error btn-xs btn-outline"
+                  @click.stop="handleDelete(note.id)"
+                >
+                  🗑️ 删除
                 </button>
               </div>
             </div>
@@ -200,11 +227,14 @@ onMounted(async () => {
             </button>
             <div class="flex-1"></div>
             <div class="flex gap-2">
+              <button
+                class="btn btn-error btn-sm btn-outline"
+                @click="handleDelete(selectedNote.id)"
+              >
+                🗑️ 删除
+              </button>
               <button class="btn btn-primary btn-sm" @click="handleEdit(selectedNote)">
                 ✏️ 编辑
-              </button>
-              <button class="btn btn-error btn-sm" @click="handleDelete(selectedNote.id)">
-                🗑️ 删除
               </button>
             </div>
           </div>
@@ -213,13 +243,56 @@ onMounted(async () => {
           <div class="flex-1 overflow-y-auto p-6">
             <h1 class="text-3xl font-bold mb-4">{{ selectedNote.title || 'Untitled Note' }}</h1>
             <div class="text-sm text-base-content/60 mb-6 flex gap-4">
-              <span>📅 创建: {{ formatDate(selectedNote.created_at) }}</span>
-              <span>🔄 更新: {{ formatDate(selectedNote.updated_at) }}</span>
+              <span>📅 创建于 {{ formatDate(selectedNote.created_at) }}</span>
+              <span>🔄 更新于{{ formatDate(selectedNote.updated_at) }}</span>
             </div>
+
+            <!-- 笔记内容 -->
             <div class="prose dark:prose-invert max-w-none">
-              <pre class="whitespace-pre-wrap break-words bg-base-200 p-4 rounded-lg">{{
+              <pre class="whitespace-pre-wrap wrap-break-word bg-base-200 p-4 rounded-lg">{{
                 selectedNote.content || '暂无内容'
               }}</pre>
+            </div>
+            <!-- 关联文件列表 -->
+            <div
+              v-if="selectedNote.files && selectedNote.files.length > 0"
+              class="border-t border-gray-200 dark:border-gray-700 mb-3 mt-3 pt-4"
+            >
+              <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
+                <span>📎</span>
+                <span>关联的文件 ({{ selectedNote.files.length }})</span>
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  v-for="file in selectedNote.files"
+                  :key="file.id"
+                  class="flex items-center gap-3 p-3 bg-base-200 hover:bg-base-300 rounded-lg cursor-pointer transition-colors"
+                  @click="handleFileClick(file)"
+                >
+                  <div
+                    :class="`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${getFileTypeColor(file.mime_type)}`"
+                  >
+                    {{ getFileIcon(file.mime_type) }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium truncate text-sm">{{ file.filename }}</p>
+                    <p class="text-xs text-base-content/60">{{ formatSize(file.size) }}</p>
+                  </div>
+                  <svg
+                    class="w-5 h-5 text-base-content/40 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -234,5 +307,12 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <!-- 文件预览弹窗 -->
+    <FilePreview
+      v-if="showFilePreview && previewFile"
+      :file="previewFile"
+      @close="handleClosePreview"
+    />
   </div>
 </template>

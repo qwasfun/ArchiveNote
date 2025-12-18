@@ -23,13 +23,13 @@
           </h2>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="$emit('cancel')" class="btn btn-sm btn-ghost">取消</button>
+          <button @click="$emit('cancel')" class="btn btn-sm btn-soft">✖️ 取消</button>
           <button
             @click="handleSubmit"
             class="btn btn-sm btn-primary"
             :disabled="!title.trim() || !content.trim()"
           >
-            保存
+            💾 保存
           </button>
         </div>
       </div>
