@@ -91,32 +91,6 @@
             />
           </div>
 
-          <!-- 快捷操作 -->
-          <div class="flex items-center gap-2">
-            <RouterLink to="/files" class="btn btn-sm btn-primary gap-2 hidden lg:flex">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                ></path>
-              </svg>
-              上传文件
-            </RouterLink>
-            <RouterLink to="/notes" class="btn btn-sm btn-ghost gap-2 hidden lg:flex">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 4v16m8-8H4"
-                ></path>
-              </svg>
-              新建笔记
-            </RouterLink>
-          </div>
-
           <!-- 用户认证按钮 -->
           <div class="flex items-center gap-2">
             <template v-if="isLoggedIn">
@@ -206,6 +180,19 @@
             @click="showMobileMenu = false"
           >
             📝 笔记管理
+          </RouterLink>
+          <RouterLink
+            to="/recycle"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            :class="{
+              'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
+                $route.path === '/recycle',
+              'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800':
+                $route.path !== '/recycle',
+            }"
+            @click="showMobileMenu = false"
+          >
+            🗑️ 回收站
           </RouterLink>
 
           <!-- 移动端搜索 -->
