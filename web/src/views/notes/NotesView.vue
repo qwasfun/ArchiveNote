@@ -8,6 +8,7 @@ const notes = ref([])
 const loading = ref(false)
 const selectedNote = ref(null)
 const isEditing = ref(false)
+const isViewing = ref(false)
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -44,11 +45,21 @@ const handlePageChange = (page) => {
 
 const handleCreate = () => {
   selectedNote.value = null
+  isViewing.value = false
   isEditing.value = true
 }
 
-const handleEdit = (note) => {
+const handleView = (note) => {
   selectedNote.value = { ...note } // Clone to avoid direct mutation
+  isViewing.value = true
+  isEditing.value = false
+}
+
+const handleEdit = (note) => {
+  if (note) {
+    selectedNote.value = { ...note }
+  }
+  isViewing.value = false
   isEditing.value = true
 }
 
@@ -60,6 +71,7 @@ const handleSave = async (noteData) => {
       await noteService.createNote(noteData)
     }
     isEditing.value = false
+    isViewing.value = false
     selectedNote.value = null
     await loadNotes()
   } catch (error) {
@@ -73,10 +85,21 @@ const handleDelete = async (id) => {
     await noteService.deleteNote(id)
     await loadNotes()
     if (selectedNote.value && selectedNote.value.id === id) {
-      isEditing.value = false
+      isViewing.value = false
       selectedNote.value = null
     }
   } catch (error) {
+    console.error('Failed to delete note', error)
+  }
+}
+
+const handleCancel = () => {
+  isEditing.value = false
+  if (!selectedNote.value?.id) {
+    isViewing.value = false
+    selectedNote.value = null
+  } else {
+    isViewing.value = true
     console.error('Failed to delete note', error)
   }
 }
@@ -92,7 +115,7 @@ onMounted(async () => {
       <!-- Notes List Sidebar -->
       <div
         class="w-full md:w-1/3 flex-col h-full"
-        :class="[isEditing ? 'hidden md:flex' : 'flex']"
+        :class="[isEditing || isViewing ? 'hidden md:flex' : 'flex']"
       >
         <div class="flex justify-between items-center mb-4 px-2">
           <div>
@@ -110,9 +133,9 @@ onMounted(async () => {
           <div
             v-for="note in notes"
             :key="note.id"
-            class="card bg-base-100 shadow-sm hover:bg-base-200 cursor-pointer transition-colors"
+            class="card bg-base-100 shadow-md hover:bg-base-200 cursor-pointer transition-colors"
             :class="{ 'ring-2 ring-primary': selectedNote?.id === note.id }"
-            @click="handleEdit(note)"
+            @click="handleView(note)"
           >
             <div class="card-body p-4">
               <h3 class="font-bold truncate">{{ note.title || 'Untitled Note' }}</h3>
@@ -152,14 +175,56 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- main Content / Editor -->
-      <div class="flex-1 h-full md:ml-4" :class="{ 'hidden md:block': !isEditing }">
+      <!-- main Content / Editor / Preview -->
+      <div
+        class="flex-1 h-full md:ml-4 pb-2"
+        :class="{ 'hidden md:block': !isEditing && !isViewing }"
+      >
+        <!-- Editor -->
         <NoteEditor
           v-if="isEditing"
           :note="selectedNote"
           @save="handleSave"
-          @cancel="isEditing = false"
+          @cancel="handleCancel"
         />
+
+        <!-- Preview -->
+        <div
+          v-else-if="isViewing && selectedNote"
+          class="h-full flex flex-col bg-base-100 rounded-box shadow-md"
+        >
+          <!-- Preview Header -->
+          <div class="p-4 border-b border-base-200 flex justify-between items-center">
+            <button class="btn btn-ghost btn-sm md:hidden" @click="isViewing = false">
+              ← 返回
+            </button>
+            <div class="flex-1"></div>
+            <div class="flex gap-2">
+              <button class="btn btn-primary btn-sm" @click="handleEdit(selectedNote)">
+                ✏️ 编辑
+              </button>
+              <button class="btn btn-error btn-sm" @click="handleDelete(selectedNote.id)">
+                🗑️ 删除
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview Content -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <h1 class="text-3xl font-bold mb-4">{{ selectedNote.title || 'Untitled Note' }}</h1>
+            <div class="text-sm text-base-content/60 mb-6 flex gap-4">
+              <span>📅 创建: {{ formatDate(selectedNote.created_at) }}</span>
+              <span>🔄 更新: {{ formatDate(selectedNote.updated_at) }}</span>
+            </div>
+            <div class="prose dark:prose-invert max-w-none">
+              <pre class="whitespace-pre-wrap break-words bg-base-200 p-4 rounded-lg">{{
+                selectedNote.content || '暂无内容'
+              }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
         <div
           v-else
           class="h-full flex flex-col items-center justify-center text-base-content/30 bg-base-200 rounded-box"
