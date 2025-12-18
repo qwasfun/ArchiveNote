@@ -138,7 +138,7 @@ async def list_files(
                 "filename": f.filename,
                 "size": f.size,
                 "storage_path": f.storage_path,
-                "download_url": get_public_url(f.storage_path) or f"/api/v1/files/download/{f.id}/{f.filename}",
+                "download_url": f.download_url,
                 "notes_count": f.notes_count,
                 "mime_type": f.mime_type,
                 "created_at": f.created_at
@@ -153,7 +153,6 @@ async def get_file_metadata(file_id: str, db: AsyncSession = Depends(get_async_s
                             current_user: User = Depends(get_current_user)):
     result = await db.execute(select(File).where((File.id == file_id) & (File.user_id == current_user.id)))
     file = result.scalar_one_or_none()
-    file.download_url = f"/api/v1/files/download/{file.id}/{file.filename}",
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
     return file

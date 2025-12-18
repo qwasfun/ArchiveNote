@@ -32,6 +32,7 @@ class FileResponseModel(BaseModel):
     is_deleted: bool | int = False
     deleted_at: datetime | None = None
     notes_count: int = 0
+    download_url: str | None = None
 
     class Config:
         from_attributes = True

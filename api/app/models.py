@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Table, Column, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from app.database import Base
+from app.services.storage import get_public_url
 import uuid
 
 
@@ -69,6 +70,10 @@ class File(Base):
     @property
     def notes_count(self) -> int:
         return len(self.notes)
+
+    @property
+    def download_url(self) -> str:
+        return get_public_url(self.storage_path) or f"/api/v1/files/download/{self.id}/{self.filename}"
 
 
 class Note(Base):

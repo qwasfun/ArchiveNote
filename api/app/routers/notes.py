@@ -49,7 +49,7 @@ async def list_notes(
     offset = (page - 1) * page_size
 
     # 基础查询
-    stmt = select(Note).where(Note.user_id == current_user.id).options(selectinload(Note.files))
+    stmt = select(Note).where(Note.user_id == current_user.id).options(selectinload(Note.files).selectinload(File.notes))
 
     if file_id:
         stmt = stmt.join(Note.files).where(File.id == file_id)
@@ -75,14 +75,38 @@ async def list_notes(
         "page": page,
         "page_size": page_size,
         "total_pages": (total + page_size - 1) // page_size,
-        "data": notes
+        "data": [
+            {
+                "id": note.id,
+                "user_id": note.user_id,
+                "title": note.title,
+                "content": note.content,
+                "visibility": note.visibility,
+                "created_at": note.created_at,
+                "updated_at": note.updated_at,
+                "files": [
+                    {
+                        "id": f.id,
+                        "filename": f.filename,
+                        "size": f.size,
+                        "storage_path": f.storage_path,
+                        "download_url": f.download_url,
+                        "notes_count": f.notes_count,
+                        "mime_type": f.mime_type,
+                        "created_at": f.created_at
+                    }
+                    for f in note.files
+                ]
+            }
+            for note in notes
+        ]
     }
 
 
-@router.get("/{note_id}")
+@router.get("/{note_id}", response_model=NoteResponse)
 async def get_note(note_id: str, db: AsyncSession = Depends(get_async_session),
                    current_user: User = Depends(get_current_user)):
-    query = select(Note).options(selectinload(Note.files)).where(
+    query = select(Note).options(selectinload(Note.files).selectinload(File.notes)).where(
         (Note.id == note_id) & (Note.user_id == current_user.id))
     result = await db.execute(query)
     note = result.scalar_one_or_none()
