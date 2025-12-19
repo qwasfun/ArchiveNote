@@ -197,7 +197,7 @@ const loadTextContent = async () => {
     const text = await response.text()
     textContent.value =
       text.length > 10000 ? text.substring(0, 10000) + '\n...(文件内容过长，已截断)' : text
-  } catch (error) {
+  } catch  {
     textContent.value = '无法加载文件内容'
   }
 }

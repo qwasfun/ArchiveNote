@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import FileUpload from '../../components/FileUpload.vue'
 import FileGrid from '../../components/FileGrid.vue'
 import FilePreview from '../../components/FilePreview.vue'

@@ -15,3 +15,11 @@ export function login(formData) {
     },
   })
 }
+
+export function refreshToken() {
+  return service.post('/v1/auth/refresh')
+}
+
+export function logout() {
+  return service.post('/v1/auth/logout')
+}
