@@ -154,6 +154,7 @@ async def list_files(
                 "notes_count": f.notes_count,
                 "mime_type": f.mime_type,
                 "created_at": f.created_at,
+                "updated_at": f.updated_at,
                 "original_created_at":f.original_created_at,
                 "original_updated_at":f.original_updated_at,
             }
