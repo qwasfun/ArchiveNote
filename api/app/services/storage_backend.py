@@ -12,6 +12,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
+from urllib.parse import quote
 
 
 class StorageBackend(ABC):
@@ -70,7 +71,7 @@ class StorageBackend(ABC):
         """
         pass
 
-    def get_public_url(self, storage_path):
+    def get_public_url(self, storage_path: str, filename: str = None):
         pass
 
 
@@ -136,7 +137,7 @@ class LocalStorageBackend(StorageBackend):
             "path": storage_path
         }
     
-    def get_public_url(self, storage_path: str) -> str:
+    def get_public_url(self, storage_path: str, filename: str = None) -> str:
         """
         本地存储不支持公共 URL，返回 None
         """
@@ -306,16 +307,22 @@ class S3StorageBackend(StorageBackend):
         except ClientError:
             return False
     
-    def get_download_info(self, storage_path: str) -> dict:
+    def get_download_info(self, storage_path: str, filename: str = None) -> dict:
         """获取 S3 文件下载信息"""
         # 生成预签名 URL（有效期 1 小时）
         try:
+            params = {
+                'Bucket': self.bucket_name,
+                'Key': storage_path
+            }
+            
+            if filename:
+                encoded_filename = quote(filename)
+                params['ResponseContentDisposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
+
             presigned_url = self.s3_client.generate_presigned_url(
                 'get_object',
-                Params={
-                    'Bucket': self.bucket_name,
-                    'Key': storage_path
-                },
+                Params=params,
                 ExpiresIn=3600  # 1 小时
             )
             return {
@@ -327,12 +334,13 @@ class S3StorageBackend(StorageBackend):
         except Exception as e:
             raise Exception(f"生成预签名 URL 失败: {e}")
     
-    def get_public_url(self, storage_path: str) -> str:
+    def get_public_url(self, storage_path: str, filename: str = None) -> str:
         """
         生成签名后的公共 URL
         
         Args:
             storage_path: S3 对象键
+            filename: 文件名（可选，用于设置 Content-Disposition）
             
         Returns:
             签名后的公共 URL
@@ -353,12 +361,18 @@ class S3StorageBackend(StorageBackend):
                 )
             )
             try:
+                params = {
+                    # 'Bucket': self.bucket_name,
+                    'Key': storage_path
+                }
+                
+                if filename:
+                    encoded_filename = quote(filename)
+                    params['ResponseContentDisposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
+
                 presigned_url = public_client.generate_presigned_url(
                     'get_object',
-                    Params={
-                        # 'Bucket': self.bucket_name,
-                        'Key': storage_path
-                    },
+                    Params=params,
                     ExpiresIn=3600  # 1 小时
                 )
                 return presigned_url
@@ -366,7 +380,7 @@ class S3StorageBackend(StorageBackend):
                 print(f"使用公共 URL 生成签名 URL 失败: {e}，回退到默认方式")
         
         # 默认使用标准签名 URL
-        return self.get_download_info(storage_path)["presigned_url"]
+        return self.get_download_info(storage_path, filename)["presigned_url"]
     
     def get_object(self, storage_path: str) -> bytes:
         """

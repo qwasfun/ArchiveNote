@@ -7,7 +7,7 @@ from app.database import get_async_session
 from app.models import File, Folder
 from app.services.security import get_current_user
 from app.schemas import FileResponseModel, FileMove, FileRename, BatchFileMove, BatchFileOperation
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from app.models import User
 from datetime import datetime
 from app.services.storage import save_file, delete_file, file_exists, get_storage, get_public_url
@@ -219,37 +219,19 @@ async def download_file(
     
     # 检查是否为 S3 存储
     if isinstance(storage, S3StorageBackend):
-        # S3 存储：返回文件内容
+        # S3 存储：重定向到预签名 URL
         try:
-            file_content = storage.get_object(storage_path)
-            
-            # 对文件名进行URL编码以支持中文等非ASCII字符
-            encoded_filename = quote(file_record.filename)
-            
-            # 如果是PDF文件，使用inline方式在浏览器中显示
-            if file_record.mime_type == "application/pdf":
-                from fastapi.responses import Response
-                return Response(
-                    content=file_content,
-                    media_type=file_record.mime_type,
-                    headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"}
-                )
-            
-            # 其他文件类型
-            from fastapi.responses import Response
-            return Response(
-                content=file_content,
-                media_type=file_record.mime_type,
-                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
-            )
+            url = storage.get_public_url(storage_path, filename=file_record.filename)
+            return RedirectResponse(url=url)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"从 S3 获取文件失败: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"获取 S3 下载链接失败: {str(e)}")
     else:
         # 本地存储：使用 FileResponse
+        # 对文件名进行URL编码以支持中文等非ASCII字符
+        encoded_filename = quote(file_record.filename)
+
         # 如果是PDF文件,使用inline方式在浏览器中显示
         if file_record.mime_type == "application/pdf":
-            # 对文件名进行URL编码以支持中文等非ASCII字符
-            encoded_filename = quote(file_record.filename)
             return FileResponse(
                 path=storage_path,
                 filename=file_record.filename,
@@ -260,7 +242,8 @@ async def download_file(
         return FileResponse(
             path=storage_path,
             filename=file_record.filename,
-            media_type=file_record.mime_type
+            media_type=file_record.mime_type,
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
         )
 
 
