@@ -15,9 +15,12 @@ const loading = ref(false)
 const showUploadModal = ref(false)
 const showCreateFolderModal = ref(false)
 const showRenameFolderModal = ref(false)
+const showRenameFileModal = ref(false)
 const editingFolder = ref(null)
+const editingFile = ref(null)
 const newFolderName = ref('')
 const renameFolderName = ref('')
+const renameFileName = ref('')
 const previewFile = ref(null)
 const notesFile = ref(null)
 const showNotes = ref(false)
@@ -112,6 +115,25 @@ const confirmBatchMove = async () => {
     isSelectionMode.value = false
   } catch (error) {
     console.error('Batch move failed', error)
+  }
+}
+
+const handleRenameFile = (file) => {
+  editingFile.value = file
+  renameFileName.value = file.filename
+  showRenameFileModal.value = true
+}
+
+const confirmRenameFile = async () => {
+  if (!renameFileName.value) return
+  try {
+    await fileService.renameFile(editingFile.value.id, { filename: renameFileName.value })
+    showRenameFileModal.value = false
+    editingFile.value = null
+    renameFileName.value = ''
+    await loadData()
+  } catch (error) {
+    console.error('Rename file failed', error)
   }
 }
 
@@ -379,6 +401,28 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Rename File Modal -->
+      <div
+        v-if="showRenameFileModal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
+          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">重命名文件</h3>
+          <input
+            v-model="renameFileName"
+            type="text"
+            placeholder="File Name"
+            class="input input-bordered w-full mb-4"
+            @keyup.enter="confirmRenameFile"
+            autoFocus
+          />
+          <div class="flex justify-end gap-2">
+            <button @click="showRenameFileModal = false" class="btn btn-ghost">取消</button>
+            <button @click="confirmRenameFile" class="btn btn-primary">保存</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Create Folder Modal -->
       <div
         v-if="showCreateFolderModal"
@@ -527,6 +571,7 @@ onMounted(() => {
             @open-folder="openFolder"
             @delete-folder="deleteFolder"
             @edit-folder="openRenameFolderModal"
+            @rename-file="handleRenameFile"
           />
 
           <!-- Pagination -->

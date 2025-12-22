@@ -402,7 +402,6 @@ const loadData = async () => {
     recentNotes.value = notes
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       .slice(0, 5)
-
   } catch (error) {
     console.error('Failed to load dashboard data', error)
   }

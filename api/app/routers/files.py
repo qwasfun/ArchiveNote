@@ -6,7 +6,7 @@ from sqlalchemy import select, or_, func
 from app.database import get_async_session
 from app.models import File, Folder
 from app.services.security import get_current_user
-from app.schemas import FileResponseModel, FileMove, BatchFileMove, BatchFileOperation
+from app.schemas import FileResponseModel, FileMove, FileRename, BatchFileMove, BatchFileOperation
 from fastapi.responses import FileResponse
 from app.models import User
 from datetime import datetime
@@ -83,6 +83,25 @@ async def move_file(
             raise HTTPException(status_code=400, detail="Target folder not found")
 
     file.folder_id = file_move.folder_id
+    await db.commit()
+    await db.refresh(file)
+    return file
+
+
+@router.put("/{file_id}/rename", response_model=FileResponseModel)
+async def rename_file(
+    file_id: str,
+    file_rename: FileRename,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    stmt = select(File).where(File.id == file_id, File.user_id == current_user.id)
+    result = await db.execute(stmt)
+    file = result.scalar_one_or_none()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file.filename = file_rename.filename
     await db.commit()
     await db.refresh(file)
     return file

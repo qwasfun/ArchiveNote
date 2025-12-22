@@ -59,6 +59,10 @@ class FileMove(BaseModel):
     folder_id: str | None
 
 
+class FileRename(BaseModel):
+    filename: str
+
+
 class BatchFileOperation(BaseModel):
     file_ids: list[str]
 
