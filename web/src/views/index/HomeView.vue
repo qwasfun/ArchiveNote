@@ -408,7 +408,7 @@ const loadData = async () => {
   }
 }
 
-const { isAuthenticated } = useAuthStore
+const { isAuthenticated } = useAuthStore()
 
 onMounted(() => {
   if (isAuthenticated) {
