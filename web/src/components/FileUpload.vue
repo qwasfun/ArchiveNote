@@ -109,9 +109,9 @@ import fileService from '../api/fileService'
 
 const uploadFiles = async (filesWithPaths) => {
   uploading.value = true
-  
-  // 分批上传，每批最多 50 个文件
-  const BATCH_SIZE = 50
+
+  // 分批上传，每批最多 20 个文件
+  const BATCH_SIZE = 20
   const totalFiles = filesWithPaths.length
   let uploadedCount = 0
   

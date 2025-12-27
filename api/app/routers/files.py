@@ -82,7 +82,7 @@ async def upload_files(
         current_user: User = Depends(get_current_user)
 ):
     # 批量提交大小限制，避免单次事务过大
-    BATCH_SIZE = 50
+    BATCH_SIZE = 20
     results = []
 
     for i, file in enumerate(files):
