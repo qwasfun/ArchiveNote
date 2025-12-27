@@ -13,6 +13,7 @@ const isDragging = ref(false)
 const fileInput = ref(null)
 const folderInput = ref(null)
 const uploading = ref(false)
+const uploadProgress = ref({ current: 0, total: 0 })
 
 const handleDragOver = (e) => {
   e.preventDefault()
@@ -108,27 +109,44 @@ import fileService from '../api/fileService'
 
 const uploadFiles = async (filesWithPaths) => {
   uploading.value = true
-  const formData = new FormData()
-
-  // 添加文件和对应的相对路径
-  for (let i = 0; i < filesWithPaths.length; i++) {
-    const { file, path } = filesWithPaths[i]
-    formData.append('files', file)
-    formData.append('relative_paths', path)
-  }
-
+  
+  // 分批上传，每批最多 50 个文件
+  const BATCH_SIZE = 50
+  const totalFiles = filesWithPaths.length
+  let uploadedCount = 0
+  
+  uploadProgress.value = { current: 0, total: totalFiles }
+  
   try {
-    const params = {}
-    if (props.folderId) {
-      params.folder_id = props.folderId
+    for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
+      const batch = filesWithPaths.slice(i, i + BATCH_SIZE)
+      const formData = new FormData()
+
+      // 添加文件和对应的相对路径
+      for (const { file, path } of batch) {
+        // 使用 webkitRelativePath 作为文件名发送
+        const fileToUpload = new File([file], path, { type: file.type })
+        formData.append('files', fileToUpload)
+      }
+
+      const params = {}
+      if (props.folderId) {
+        params.folder_id = props.folderId
+      }
+      
+      await fileService.uploadFiles(formData, params)
+      uploadedCount += batch.length
+      uploadProgress.value.current = uploadedCount
+      console.log(`已上传 ${uploadedCount}/${totalFiles} 个文件`)
     }
-    await fileService.uploadFiles(formData, params)
+    
     emit('upload-success')
   } catch (error) {
     console.error('Upload failed', error)
-    alert('Upload failed')
+    alert(`上传失败: ${error.message || '未知错误'}`)
   } finally {
     uploading.value = false
+    uploadProgress.value = { current: 0, total: 0 }
     // Reset input
     if (fileInput.value) fileInput.value.value = ''
     if (folderInput.value) folderInput.value.value = ''
@@ -165,6 +183,14 @@ const uploadFiles = async (filesWithPaths) => {
     <div v-if="uploading" class="flex flex-col items-center">
       <span class="loading loading-spinner loading-lg text-primary"></span>
       <p class="mt-2 text-primary">上传中...</p>
+      <p class="text-sm text-base-content/60 mt-1">
+        {{ uploadProgress.current }} / {{ uploadProgress.total }} 个文件
+      </p>
+      <progress 
+        class="progress progress-primary w-56 mt-2" 
+        :value="uploadProgress.current" 
+        :max="uploadProgress.total"
+      ></progress>
     </div>
     <div v-else>
       <div class="text-4xl mb-4">📂</div>

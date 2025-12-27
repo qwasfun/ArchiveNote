@@ -20,10 +20,10 @@ UPLOAD_DIR = "data/uploads"
 
 
 async def get_or_create_folder_by_path(
-    db: AsyncSession,
-    user_id: str,
-    parent_folder_id: Optional[str],
-    folder_path: str
+        db: AsyncSession,
+        user_id: str,
+        parent_folder_id: Optional[str],
+        folder_path: str
 ) -> Optional[str]:
     """
     根据路径创建或获取文件夹，返回最终文件夹的ID
@@ -31,30 +31,30 @@ async def get_or_create_folder_by_path(
     """
     if not folder_path:
         return parent_folder_id
-    
+
     # 分割路径
     path_parts = folder_path.split('/')
     current_parent_id = parent_folder_id
-    
+
     for folder_name in path_parts:
         if not folder_name:
             continue
-            
+
         # 查找是否已存在该文件夹
         stmt = select(Folder).where(
             Folder.user_id == user_id,
             Folder.name == folder_name,
             Folder.is_deleted == 0
         )
-        
+
         if current_parent_id is not None:
             stmt = stmt.where(Folder.parent_id == current_parent_id)
         else:
             stmt = stmt.where(Folder.parent_id.is_(None))
-        
+
         result = await db.execute(stmt)
         folder = result.scalar_one_or_none()
-        
+
         if not folder:
             # 创建新文件夹
             folder = Folder(
@@ -66,9 +66,9 @@ async def get_or_create_folder_by_path(
             )
             db.add(folder)
             await db.flush()  # 立即获取ID
-        
+
         current_parent_id = folder.id
-    
+
     return current_parent_id
 
 
@@ -76,34 +76,30 @@ async def get_or_create_folder_by_path(
 async def upload_files(
         folder_id: Optional[str] = Query(None),
         files: List[UploadFile] = FastAPIFile(...),
-        relative_paths: Optional[List[str]] = Form(None),
         original_created_at: Optional[List[datetime]] = Query(None),
         original_updated_at: Optional[List[datetime]] = Query(None),
         db: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(get_current_user)
 ):
+    # 批量提交大小限制，避免单次事务过大
+    BATCH_SIZE = 50
     results = []
+
     for i, file in enumerate(files):
-        # 获取相对路径
-        relative_path = ""
-        if relative_paths and i < len(relative_paths):
-            relative_path = relative_paths[i]
-        
+        # 从 filename 中获取相对路径（webkitRelativePath）
+        relative_path = file.filename or ""
+
         # 解析文件夹路径和文件名
         target_folder_id = folder_id
-        actual_filename = file.filename  # 默认使用原始文件名
-        
-        if relative_path:
-            # 从相对路径中提取目录部分和文件名
-            dir_path = os.path.dirname(relative_path)
-            actual_filename = os.path.basename(relative_path)  # 提取纯文件名
-            
-            if dir_path:
-                # 创建或获取文件夹结构
-                target_folder_id = await get_or_create_folder_by_path(
-                    db, str(current_user.id), folder_id, dir_path
-                )
-        
+        actual_filename = os.path.basename(relative_path) if relative_path else file.filename
+        dir_path = os.path.dirname(relative_path) if relative_path else ""
+
+        if dir_path:
+            # 创建或获取文件夹结构
+            target_folder_id = await get_or_create_folder_by_path(
+                db, str(current_user.id), folder_id, dir_path
+            )
+
         # 保存文件（传递 user_id 用于组织文件结构）
         storage_path, mime_type, size = save_file(file, str(current_user.id))
 
@@ -128,7 +124,7 @@ async def upload_files(
         new_file = File(
             user_id=current_user.id,
             folder_id=target_folder_id,
-            filename=actual_filename,  # 使用提取的纯文件名
+            filename=actual_filename,
             storage_path=storage_path,
             mime_type=mime_type,
             size=size,
@@ -138,18 +134,28 @@ async def upload_files(
         db.add(new_file)
         results.append(new_file)
 
+        # 分批提交，避免单次事务过大
+        if (i + 1) % BATCH_SIZE == 0:
+            await db.commit()
+            for result in results[i + 1 - BATCH_SIZE:i + 1]:
+                await db.refresh(result)
+
+    # 提交剩余的文件
     await db.commit()
-    for result in results:
+    # 刷新最后一批未刷新的记录
+    last_batch_start = (len(files) // BATCH_SIZE) * BATCH_SIZE
+    for result in results[last_batch_start:]:
         await db.refresh(result)
+
     return results
 
 
 @router.put("/{file_id}/move", response_model=FileResponseModel)
 async def move_file(
-    file_id: str,
-    file_move: FileMove,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+        file_id: str,
+        file_move: FileMove,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)
 ):
     stmt = select(File).where(File.id == file_id, File.user_id == current_user.id)
     result = await db.execute(stmt)
@@ -171,17 +177,17 @@ async def move_file(
 
 @router.put("/{file_id}/rename", response_model=FileResponseModel)
 async def rename_file(
-    file_id: str,
-    file_rename: FileRename,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+        file_id: str,
+        file_rename: FileRename,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)
 ):
     stmt = select(File).where(File.id == file_id, File.user_id == current_user.id)
     result = await db.execute(stmt)
     file = result.scalar_one_or_none()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-    
+
     file.filename = file_rename.filename
     await db.commit()
     await db.refresh(file)
@@ -256,8 +262,8 @@ async def list_files(
                 "mime_type": f.mime_type,
                 "created_at": f.created_at,
                 "updated_at": f.updated_at,
-                "original_created_at":f.original_created_at,
-                "original_updated_at":f.original_updated_at,
+                "original_created_at": f.original_created_at,
+                "original_updated_at": f.original_updated_at,
             }
             for f in files
         ]
@@ -272,6 +278,7 @@ async def get_file_metadata(file_id: str, db: AsyncSession = Depends(get_async_s
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
     return file
+
 
 @router.get("/download/{file_id}/{filename}")
 async def download_file(
@@ -298,7 +305,7 @@ async def download_file(
 
     # 获取存储后端实例
     storage = get_storage()
-    
+
     # 检查是否为 S3 存储
     if isinstance(storage, S3StorageBackend):
         # S3 存储：重定向到预签名 URL
@@ -345,7 +352,7 @@ async def preview_file(
 
     # 获取存储后端实例
     storage = get_storage()
-    
+
     # 检查是否为 S3 存储
     if isinstance(storage, S3StorageBackend):
         # S3 存储：重定向到预签名 URL
@@ -369,16 +376,16 @@ async def preview_file(
 
 @router.delete("/{file_id}")
 async def delete_file_soft(
-    file_id: str,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+        file_id: str,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)
 ):
     stmt = select(File).where(File.id == file_id, File.user_id == current_user.id)
     result = await db.execute(stmt)
     file = result.scalar_one_or_none()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-    
+
     file.is_deleted = 1
     file.deleted_at = datetime.utcnow()
     await db.commit()
@@ -387,9 +394,9 @@ async def delete_file_soft(
 
 @router.post("/batch/move")
 async def batch_move_files(
-    batch_move: BatchFileMove,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+        batch_move: BatchFileMove,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)
 ):
     if batch_move.folder_id:
         folder_stmt = select(Folder).where(Folder.id == batch_move.folder_id, Folder.user_id == current_user.id)
@@ -400,27 +407,27 @@ async def batch_move_files(
     stmt = select(File).where(File.id.in_(batch_move.file_ids), File.user_id == current_user.id)
     result = await db.execute(stmt)
     files = result.scalars().all()
-    
+
     for file in files:
         file.folder_id = batch_move.folder_id
-    
+
     await db.commit()
     return {"message": f"Moved {len(files)} files"}
 
 
 @router.post("/batch/delete")
 async def batch_delete_files(
-    batch_op: BatchFileOperation,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+        batch_op: BatchFileOperation,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)
 ):
     stmt = select(File).where(File.id.in_(batch_op.file_ids), File.user_id == current_user.id)
     result = await db.execute(stmt)
     files = result.scalars().all()
-    
+
     for file in files:
         file.is_deleted = 1
         file.deleted_at = datetime.utcnow()
-    
+
     await db.commit()
     return {"message": f"Moved {len(files)} files to recycle bin"}
