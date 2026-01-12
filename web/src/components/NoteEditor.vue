@@ -70,6 +70,7 @@
             v-for="folder in attachedFolders"
             :key="folder.id"
             class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+            @click="handleFolderClick(folder)"
           >
             <div class="text-2xl">📁</div>
             <div class="flex-1 min-w-0">

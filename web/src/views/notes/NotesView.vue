@@ -139,9 +139,15 @@ const handleDeleteFile = async (id) => {
     console.error('Failed to delete file', error)
   }
 }
+
 const handleFileClick = (file) => {
   detailsFile.value = file
   showDetails.value = true
+}
+
+const handleFolderClick = (folder) => {
+  // 跳转到文件列表页面，显示该文件夹内容
+  router.push({ name: 'files', query: { folder_id: folder.id } })
 }
 
 const handleCloseDetails = () => {
@@ -291,32 +297,8 @@ onMounted(async () => {
             </div>
 
             <!-- Preview Content -->
-            <!-- <div class="flex-1 overflow-y-auto p-6"> -->
             <h1 class="text-3xl font-bold py-4">{{ selectedNote.title || 'Untitled Note' }}</h1>
-            <!-- <div class="text-sm text-base-content/60 md:flex gap-4">
-              <div>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                创建于 {{ formatDate(selectedNote.created_at) }}
-              </div>
-              <div>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                更新于 {{ formatDate(selectedNote.updated_at) }}
-              </div>
-            </div> -->
+
             <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
               <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,6 +340,7 @@ onMounted(async () => {
                   v-for="folder in selectedNote.folders"
                   :key="folder.id"
                   class="flex items-center gap-3 p-3 bg-base-200 hover:bg-base-300 rounded-lg cursor-pointer transition-colors"
+                  @click="handleFolderClick(folder)"
                 >
                   <div class="text-2xl flex-shrink-0">📁</div>
                   <div class="flex-1 min-w-0">
