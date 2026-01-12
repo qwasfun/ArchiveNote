@@ -43,7 +43,7 @@ const loadFile = async () => {
   loading.value = true
   try {
     const fileId = route.params.id
-    // 通过获取文件列表来获取单个文件信息（因为没有单独的获取文件详情API）
+    // 通过获取文件列表来获取单个文件信息
     const response = await fileService.getFile(fileId)
     const foundFile = response
     if (foundFile) {
