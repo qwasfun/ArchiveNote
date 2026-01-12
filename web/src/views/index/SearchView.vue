@@ -147,8 +147,8 @@
             <div class="p-6">
               <FileGrid
                 :files="files"
+                @view-details="handleViewDetails"
                 @delete-file="handleDelete"
-                @preview-file="handlePreview"
                 @manage-notes="handleManageNotes"
               />
             </div>
@@ -249,11 +249,13 @@
       </div>
     </div>
 
-    <!-- 文件预览模态框 -->
-    <FilePreview
-      :file="previewFile"
-      @close="closePreview"
-      @add-note="(file) => handleManageNotes(file, 'file')"
+    <!-- 文件详情模态框 -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      @close="handleCloseDetails"
+      @manage-notes="handleManageNotes"
+      @delete="handleDelete"
     />
 
     <!-- 统一笔记管理模态框 -->
@@ -272,7 +274,7 @@ import { useRoute, useRouter } from 'vue-router'
 import fileService from '../../api/fileService.js'
 import noteService from '../../api/noteService.js'
 import FileGrid from '../../components/FileGrid.vue'
-import FilePreview from '../../components/FilePreview.vue'
+import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
 
 const route = useRoute()
@@ -285,7 +287,8 @@ const notes = ref([])
 const loading = ref(false)
 const searchTime = ref(0)
 const activeTab = ref('all')
-const previewFile = ref(null)
+const detailsFile = ref(null)
+const showDetails = ref(false)
 const notesItem = ref(null)
 const notesItemType = ref('file')
 const showNotes = ref(false)
@@ -352,25 +355,28 @@ const handleDelete = async (id) => {
   if (!confirm('确定要删除这个文件吗？')) return
   try {
     await fileService.deleteFile(id)
-    files.value = files.value.filter((file) => file.id !== id)
+    showDetails.value = false
+    await performSearch()
   } catch (error) {
     console.error('Failed to delete file', error)
   }
 }
 
-const handlePreview = (file) => {
-  previewFile.value = file
+const handleViewDetails = (file) => {
+  detailsFile.value = file
+  showDetails.value = true
 }
 
-const closePreview = () => {
-  previewFile.value = null
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
 }
 
 const handleManageNotes = (item, type) => {
   notesItem.value = item
   notesItemType.value = type
   showNotes.value = true
-  previewFile.value = null
+  detailsFile.value = null
 }
 
 const closeNotes = () => {

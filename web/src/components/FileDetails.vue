@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch } from 'vue'
 import { formatDate, formatSize } from '@/utils/format'
 import {
   getFileIcon,
@@ -12,19 +13,31 @@ import {
 
 import PDFViewer from '@/components/PDFViewer.vue'
 import TextViewer from '@/components/TextViewer.vue'
+import fileService from '../api/fileService'
 
 const props = defineProps({
-  file: {
-    type: Object,
-    default: null,
+  // 当模态框打开才有 fileId
+  fileId: {
+    type: String,
+    // required: true,
   },
   isOpen: {
     type: Boolean,
     default: false,
   },
+  showRename: {
+    type: Boolean,
+    default: false,
+  },
+  showManageNotes: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['close', 'preview', 'manage-notes', 'rename', 'delete', 'download'])
+const emit = defineEmits(['close', 'manage-notes', 'rename', 'delete', 'download'])
+
+const file = ref(null)
 
 const copyToClipboard = async (text) => {
   try {
@@ -43,6 +56,21 @@ const getFileExtension = (filename) => {
 const close = () => {
   emit('close')
 }
+
+watch(
+  () => props.isOpen,
+  async (newVal) => {
+    try {
+      const id = props.fileId
+      if (newVal && id) {
+        const response = await fileService.getFile(id)
+        file.value = response
+      }
+    } catch (error) {
+      console.error('Failed to load file', error)
+    }
+  },
+)
 </script>
 
 <template>
@@ -347,7 +375,11 @@ const close = () => {
         class="flex flex-wrap sm:flex-row items-center justify-between gap-4 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
       >
         <div class="flex gap-2">
-          <button @click="$emit('rename', file)" class="btn btn-sm btn-outline gap-2">
+          <button
+            v-if="showRename"
+            @click="$emit('rename', file)"
+            class="btn btn-sm btn-outline gap-2"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -371,7 +403,11 @@ const close = () => {
           </button>
         </div>
         <div class="flex gap-2">
-          <button @click="$emit('manage-notes', file, 'file')" class="btn btn-sm btn-primary gap-2">
+          <button
+            v-if="showManageNotes"
+            @click="$emit('manage-notes', file, 'file')"
+            class="btn btn-sm btn-primary gap-2"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"

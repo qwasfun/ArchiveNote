@@ -29,7 +29,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   'delete-file',
-  'preview-file',
   'manage-notes',
   'open-folder',
   'delete-folder',
@@ -207,7 +206,7 @@ const hoveredFolder = ref(null)
           <!-- 文件预览区域 -->
           <div
             class="relative h-48 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"
-            @click="$emit('preview-file', file)"
+            @click="$emit('view-details', file)"
           >
             <!-- 图片预览 -->
             <img

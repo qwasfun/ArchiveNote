@@ -3,7 +3,6 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FileUpload from '../../components/FileUpload.vue'
 import FileGrid from '../../components/FileGrid.vue'
-import FilePreview from '../../components/FilePreview.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
 import fileService from '../../api/fileService.js'
@@ -27,7 +26,6 @@ const editingFile = ref(null)
 const newFolderName = ref('')
 const renameFolderName = ref('')
 const renameFileName = ref('')
-const previewFile = ref(null)
 const detailsFile = ref(null)
 const showDetails = ref(false)
 const notesItem = ref(null)
@@ -303,22 +301,19 @@ const handleDelete = async (id) => {
   if (!confirm('Are you sure you want to delete this file?')) return
   try {
     await fileService.deleteFile(id)
+    showDetails.value = false
     await loadData()
   } catch (error) {
     console.error('Failed to delete file', error)
   }
 }
 
-const handlePreview = (file) => {
-  previewFile.value = file
-}
 const handleViewDetails = (file) => {
   detailsFile.value = file
   showDetails.value = true
 }
 
-showDetails.value = false // 关闭详情
-const closeDetails = () => {
+const handleCloseDetails = () => {
   showDetails.value = false
   detailsFile.value = null
 }
@@ -327,14 +322,11 @@ const handleManageNotes = (item, type) => {
   notesItem.value = item
   notesItemType.value = type
   showNotes.value = true
-  previewFile.value = null // 关闭预览
+  detailsFile.value = null // 关闭详情
+  showDetails.value = false
 }
 
-const closePreview = () => {
-  previewFile.value = null
-}
-
-const closeNotes = () => {
+const handleCloseNotes = () => {
   showNotes.value = false
   notesItem.value = null
 }
@@ -714,7 +706,6 @@ onMounted(async () => {
             @view-details="handleViewDetails"
             @selection-change="handleSelectionChange"
             @delete-file="handleDelete"
-            @preview-file="handlePreview"
             @manage-notes="handleManageNotes"
             @open-folder="openFolder"
             @delete-folder="deleteFolder"
@@ -747,19 +738,14 @@ onMounted(async () => {
 
     <!-- 文件详情模态框 -->
     <FileDetails
-      :file="detailsFile"
+      :file-id="detailsFile && detailsFile.id"
       :is-open="showDetails"
-      @close="closeDetails"
-      @preview="handlePreview"
+      show-manage-notes
+      show-rename
+      @close="handleCloseDetails"
       @manage-notes="handleManageNotes"
       @rename="handleRenameFile"
       @delete="handleDelete"
-    />
-    <!-- 文件预览模态框 -->
-    <FilePreview
-      :file="previewFile"
-      @close="closePreview"
-      @add-note="(file) => handleManageNotes(file, 'file')"
     />
 
     <!-- 统一笔记管理模态框 -->
@@ -767,7 +753,7 @@ onMounted(async () => {
       :is-open="showNotes"
       :item="notesItem"
       :item-type="notesItemType"
-      @close="closeNotes"
+      @close="handleCloseNotes"
       @note-created="handleNoteCreated"
     />
 

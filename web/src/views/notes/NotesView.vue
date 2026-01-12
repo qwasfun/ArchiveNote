@@ -4,8 +4,9 @@ import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import noteService from '../../api/noteService.js'
+import fileService from '../../api/fileService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
-import FilePreview from '../../components/FilePreview.vue'
+import FileDetails from '../../components/FileDetails.vue'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -17,8 +18,8 @@ const selectedNote = ref(null)
 const isEditing = ref(false)
 const isViewing = ref(false)
 
-const previewFile = ref(null)
-const showFilePreview = ref(false)
+const detailsFile = ref(null)
+const showDetails = ref(false)
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -128,14 +129,24 @@ const handleCancel = () => {
   }
 }
 
+const handleDeleteFile = async (id) => {
+  if (!confirm('Are you sure you want to delete this file?')) return
+  try {
+    await fileService.deleteFile(id)
+    showDetails.value = false
+    await loadNotes()
+  } catch (error) {
+    console.error('Failed to delete file', error)
+  }
+}
 const handleFileClick = (file) => {
-  previewFile.value = file
-  showFilePreview.value = true
+  detailsFile.value = file
+  showDetails.value = true
 }
 
-const handleClosePreview = () => {
-  showFilePreview.value = false
-  previewFile.value = null
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
 }
 
 const renderedContent = computed(() => {
@@ -418,11 +429,12 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 文件预览弹窗 -->
-    <FilePreview
-      v-if="showFilePreview && previewFile"
-      :file="previewFile"
-      @close="handleClosePreview"
+    <!-- 文件详情弹窗 -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      @close="handleCloseDetails"
+      @delete="handleDeleteFile"
     />
   </div>
 </template>

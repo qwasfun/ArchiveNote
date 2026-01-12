@@ -5,7 +5,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import noteService from '../../api/noteService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
-import FilePreview from '../../components/FilePreview.vue'
+import FileDetails from '../../components/FileDetails.vue'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -15,8 +15,8 @@ const router = useRouter()
 const note = ref(null)
 const loading = ref(false)
 const isEditing = ref(false)
-const previewFile = ref(null)
-const showFilePreview = ref(false)
+const detailsFile = ref(null)
+const showDetails = ref(false)
 
 const noteId = computed(() => route.params.id)
 
@@ -75,8 +75,8 @@ const handleBack = () => {
 }
 
 const handleFileClick = (file) => {
-  previewFile.value = file
-  showFilePreview.value = true
+  detailsFile.value = file
+  showDetails.value = true
 }
 
 const handleFolderClick = (folder) => {
@@ -84,9 +84,9 @@ const handleFolderClick = (folder) => {
   router.push({ name: 'files', query: { folder_id: folder.id } })
 }
 
-const handleClosePreview = () => {
-  showFilePreview.value = false
-  previewFile.value = null
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
 }
 
 const renderedContent = computed(() => {
@@ -314,11 +314,12 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- File Preview Modal -->
-    <FilePreview
-      v-if="showFilePreview && previewFile"
-      :file="previewFile"
-      @close="handleClosePreview"
+    <!-- File Details Modal -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      @close="handleCloseDetails"
+      @delete="handleDelete"
     />
   </div>
 </template>
