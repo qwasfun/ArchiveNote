@@ -526,7 +526,7 @@ onMounted(async () => {
       <!-- Rename File Modal -->
       <div
         v-if="showRenameFileModal"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-100"
       >
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
           <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">重命名文件</h3>

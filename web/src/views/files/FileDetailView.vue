@@ -167,9 +167,7 @@ onMounted(() => {
             >
               <span>📷</span> 文件预览
             </h2>
-            <div
-              class="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden"
-            >
+            <div class="flex items-center justify-center min-h-[400px] rounded-xl overflow-hidden">
               <!-- 图片预览 -->
               <img
                 v-if="isImage(file.mime_type)"
