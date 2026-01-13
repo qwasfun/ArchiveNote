@@ -1,12 +1,16 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import noteService from '../../api/noteService.js'
+import fileService from '../../api/fileService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
-import FilePreview from '../../components/FilePreview.vue'
+import FileDetails from '../../components/FileDetails.vue'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
+
+const router = useRouter()
 
 const notes = ref([])
 const loading = ref(false)
@@ -14,8 +18,8 @@ const selectedNote = ref(null)
 const isEditing = ref(false)
 const isViewing = ref(false)
 
-const previewFile = ref(null)
-const showFilePreview = ref(false)
+const detailsFile = ref(null)
+const showDetails = ref(false)
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -60,6 +64,11 @@ const handleView = (note) => {
   selectedNote.value = { ...note } // Clone to avoid direct mutation
   isViewing.value = true
   isEditing.value = false
+}
+
+const handleDetail = (note) => {
+  // 跳转到独立的笔记详情页面
+  router.push({ name: 'note-detail', params: { id: note.id } })
 }
 
 const handleEdit = (note) => {
@@ -120,14 +129,30 @@ const handleCancel = () => {
   }
 }
 
-const handleFileClick = (file) => {
-  previewFile.value = file
-  showFilePreview.value = true
+const handleDeleteFile = async (id) => {
+  if (!confirm('Are you sure you want to delete this file?')) return
+  try {
+    await fileService.deleteFile(id)
+    showDetails.value = false
+    await loadNotes()
+  } catch (error) {
+    console.error('Failed to delete file', error)
+  }
 }
 
-const handleClosePreview = () => {
-  showFilePreview.value = false
-  previewFile.value = null
+const handleFileClick = (file) => {
+  detailsFile.value = file
+  showDetails.value = true
+}
+
+const handleFolderClick = (folder) => {
+  // 跳转到文件列表页面，显示该文件夹内容
+  router.push({ name: 'files', query: { folder_id: folder.id } })
+}
+
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
 }
 
 const renderedContent = computed(() => {
@@ -240,24 +265,63 @@ onMounted(async () => {
               </button>
               <div class="flex-1"></div>
               <div class="flex gap-2">
+                <button class="btn btn-outline btn-sm" @click="handleDetail(selectedNote)">
+                  🔗 打开
+                </button>
                 <button
                   class="btn btn-error btn-sm btn-outline"
                   @click="handleDelete(selectedNote.id)"
                 >
-                  🗑️ 删除
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  删除
                 </button>
                 <button class="btn btn-primary btn-sm" @click="handleEdit(selectedNote)">
-                  ✏️ 编辑
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  编辑
                 </button>
               </div>
             </div>
 
             <!-- Preview Content -->
-            <!-- <div class="flex-1 overflow-y-auto p-6"> -->
             <h1 class="text-3xl font-bold py-4">{{ selectedNote.title || 'Untitled Note' }}</h1>
-            <div class="text-sm text-base-content/60 md:flex gap-4">
-              <div>📅 创建于 {{ formatDate(selectedNote.created_at) }}</div>
-              <div>🔄 更新于 {{ formatDate(selectedNote.updated_at) }}</div>
+
+            <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span>创建于 {{ formatDate(selectedNote.created_at) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span>更新于 {{ formatDate(selectedNote.updated_at) }}</span>
+              </div>
             </div>
           </div>
 
@@ -265,7 +329,7 @@ onMounted(async () => {
             <!-- 关联文件夹列表 -->
             <div
               v-if="selectedNote.folders && selectedNote.folders.length > 0"
-              class="border-t border-gray-200 dark:border-gray-700 mb-3 mt-3 pt-4"
+              class="border-b border-gray-200 dark:border-gray-700 mb-3 mt-3 pb-4"
             >
               <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
                 <span>📁</span>
@@ -276,6 +340,7 @@ onMounted(async () => {
                   v-for="folder in selectedNote.folders"
                   :key="folder.id"
                   class="flex items-center gap-3 p-3 bg-base-200 hover:bg-base-300 rounded-lg cursor-pointer transition-colors"
+                  @click="handleFolderClick(folder)"
                 >
                   <div class="text-2xl flex-shrink-0">📁</div>
                   <div class="flex-1 min-w-0">
@@ -291,7 +356,7 @@ onMounted(async () => {
             <!-- 关联文件列表 -->
             <div
               v-if="selectedNote.files && selectedNote.files.length > 0"
-              class="border-t border-gray-200 dark:border-gray-700 mb-3 mt-3 pt-4"
+              class="border-b border-gray-200 dark:border-gray-700 mb-3 mt-3 pb-4"
             >
               <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
                 <span>📎</span>
@@ -347,11 +412,12 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 文件预览弹窗 -->
-    <FilePreview
-      v-if="showFilePreview && previewFile"
-      :file="previewFile"
-      @close="handleClosePreview"
+    <!-- 文件详情弹窗 -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      @close="handleCloseDetails"
+      @delete="handleDeleteFile"
     />
   </div>
 </template>

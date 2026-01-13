@@ -1,12 +1,16 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import FileUpload from '../../components/FileUpload.vue'
 import FileGrid from '../../components/FileGrid.vue'
-import FilePreview from '../../components/FilePreview.vue'
+import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
 import fileService from '../../api/fileService.js'
 import folderService from '../../api/folderService.js'
 import storageBackendService from '../../api/storageBackendService.js'
+
+const route = useRoute()
+const router = useRouter()
 
 const files = ref([])
 const folders = ref([])
@@ -22,7 +26,8 @@ const editingFile = ref(null)
 const newFolderName = ref('')
 const renameFolderName = ref('')
 const renameFileName = ref('')
-const previewFile = ref(null)
+const detailsFile = ref(null)
+const showDetails = ref(false)
 const notesItem = ref(null)
 const notesItemType = ref('file')
 const showNotes = ref(false)
@@ -267,6 +272,8 @@ const deleteFolder = async (folder) => {
 const openFolder = async (folder) => {
   currentFolderId.value = folder.id
   breadcrumbs.value.push({ id: folder.id, name: folder.name })
+  // 更新 URL 查询参数
+  router.push({ query: { ...route.query, folder_id: folder.id } })
   await loadData()
 }
 
@@ -274,6 +281,15 @@ const navigateBreadcrumb = async (index) => {
   const target = breadcrumbs.value[index]
   currentFolderId.value = target.id
   breadcrumbs.value = breadcrumbs.value.slice(0, index + 1)
+  // 更新 URL 查询参数
+  if (target.id) {
+    router.push({ query: { ...route.query, folder_id: target.id } })
+  } else {
+    // 回到根目录，移除 folder_id 参数
+    const query = { ...route.query }
+    delete query.folder_id
+    router.push({ query })
+  }
   await loadData()
 }
 
@@ -285,28 +301,32 @@ const handleDelete = async (id) => {
   if (!confirm('Are you sure you want to delete this file?')) return
   try {
     await fileService.deleteFile(id)
+    showDetails.value = false
     await loadData()
   } catch (error) {
     console.error('Failed to delete file', error)
   }
 }
 
-const handlePreview = (file) => {
-  previewFile.value = file
+const handleViewDetails = (file) => {
+  detailsFile.value = file
+  showDetails.value = true
+}
+
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
 }
 
 const handleManageNotes = (item, type) => {
   notesItem.value = item
   notesItemType.value = type
   showNotes.value = true
-  previewFile.value = null // 关闭预览
+  detailsFile.value = null // 关闭详情
+  showDetails.value = false
 }
 
-const closePreview = () => {
-  previewFile.value = null
-}
-
-const closeNotes = () => {
+const handleCloseNotes = () => {
   showNotes.value = false
   notesItem.value = null
 }
@@ -324,7 +344,7 @@ const loadDefaultBackend = async () => {
     supportsDirectUpload.value =
       backend.backend_type === 's3' && backend.allow_client_direct_upload === true
 
-    // 如果不支持直传，强制使用普通模式
+    // 如果不支持直传,强制使用普通模式
     if (!supportsDirectUpload.value) {
       uploadMode.value = 'traditional'
     }
@@ -336,8 +356,58 @@ const loadDefaultBackend = async () => {
   }
 }
 
-onMounted(() => {
+// 从 URL 查询参数初始化文件夹
+const initFromQuery = async () => {
+  const folderId = route.query.folder_id
+  if (folderId) {
+    try {
+      // 构建面包屑路径
+      currentFolderId.value = folderId
+      await buildBreadcrumbs(folderId)
+    } catch (error) {
+      console.error('Failed to initialize from query', error)
+      // 如果加载失败，回到根目录
+      currentFolderId.value = null
+      breadcrumbs.value = [{ id: null, name: '首页' }]
+    }
+  }
+}
+
+// 构建面包屑导航路径
+const buildBreadcrumbs = async (folderId) => {
+  try {
+    const path = []
+    let currentId = folderId
+
+    // 从当前文件夹向上追溯到根目录
+    while (currentId) {
+      const folder = await folderService.getFolder(currentId)
+      path.unshift({ id: folder.id, name: folder.name })
+      currentId = folder.parent_id
+    }
+
+    // 添加根目录
+    breadcrumbs.value = [{ id: null, name: '首页' }, ...path]
+  } catch (error) {
+    console.error('Failed to build breadcrumbs', error)
+    throw error
+  }
+}
+
+// 监听路由查询参数变化
+watch(
+  () => route.query.folder_id,
+  async (newFolderId) => {
+    if (newFolderId !== currentFolderId.value) {
+      await initFromQuery()
+      await loadData()
+    }
+  },
+)
+
+onMounted(async () => {
   loadDefaultBackend()
+  await initFromQuery()
   loadData()
 })
 </script>
@@ -448,7 +518,7 @@ onMounted(() => {
       <!-- Rename File Modal -->
       <div
         v-if="showRenameFileModal"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-100"
       >
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-xl">
           <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">重命名文件</h3>
@@ -633,16 +703,15 @@ onMounted(() => {
             :selection-mode="isSelectionMode"
             :selected-files="selectedFiles"
             :selected-folders="selectedFolders"
+            @view-details="handleViewDetails"
             @selection-change="handleSelectionChange"
             @delete-file="handleDelete"
-            @preview-file="handlePreview"
             @manage-notes="handleManageNotes"
             @open-folder="openFolder"
             @delete-folder="deleteFolder"
             @edit-folder="openRenameFolderModal"
             @rename-file="handleRenameFile"
           />
-
           <!-- Pagination -->
           <div class="flex justify-center mt-6" v-if="totalPages > 1">
             <div class="join">
@@ -667,11 +736,16 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 文件预览模态框 -->
-    <FilePreview
-      :file="previewFile"
-      @close="closePreview"
-      @add-note="(file) => handleManageNotes(file, 'file')"
+    <!-- 文件详情模态框 -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      show-manage-notes
+      show-rename
+      @close="handleCloseDetails"
+      @manage-notes="handleManageNotes"
+      @rename="handleRenameFile"
+      @delete="handleDelete"
     />
 
     <!-- 统一笔记管理模态框 -->
@@ -679,7 +753,7 @@ onMounted(() => {
       :is-open="showNotes"
       :item="notesItem"
       :item-type="notesItemType"
-      @close="closeNotes"
+      @close="handleCloseNotes"
       @note-created="handleNoteCreated"
     />
 
