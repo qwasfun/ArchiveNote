@@ -526,7 +526,7 @@ async def download_file(
         # S3 存储：重定向到预签名 URL
         try:
             url = backend.get_public_url(
-                storage_path, filename=file_record.filename, disposition="inline"
+                storage_path, filename=file_record.filename, disposition="attachment"
             )
             return RedirectResponse(url=url)
         except Exception as e:
