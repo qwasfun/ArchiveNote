@@ -241,7 +241,7 @@ onMounted(async () => {
 
       <!-- main Content / Editor / Preview -->
       <div
-        class="flex-1 h-full md:ml-4 pb-2"
+        class="flex-1 h-full md:ml-4 pb-2 overflow-auto"
         :class="{ 'hidden md:block': !isEditing && !isViewing }"
       >
         <!-- Editor -->
@@ -395,7 +395,7 @@ onMounted(async () => {
               </div>
             </div>
             <!-- 笔记内容 -->
-            <div class="prose dark:prose-invert max-w-none mt-4">
+            <div class="prose dark:prose-invert max-w-none mt-4 overflow-auto">
               <div v-html="renderedContent"></div>
             </div>
           </div>

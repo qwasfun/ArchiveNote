@@ -80,7 +80,7 @@
         <!-- 右侧工具栏 -->
         <div class="flex items-center gap-3">
           <!-- 搜索框 -->
-          <div class="relative hidden md:block">
+          <div class="relative hidden lg:block">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <svg
                 class="w-4 h-4 text-gray-400"
@@ -149,7 +149,7 @@
           <!-- 移动端菜单按钮 -->
           <button
             @click="showMobileMenu = !showMobileMenu"
-            class="md:hidden btn btn-sm btn-ghost btn-circle"
+            class="lg:hidden btn btn-sm btn-ghost btn-circle"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -166,12 +166,12 @@
       <!-- 移动端菜单 -->
       <div
         v-if="showMobileMenu"
-        class="md:hidden py-4 border-t border-gray-200 dark:border-gray-700"
+        class="lg:hidden py-4 border-t border-gray-200 dark:border-gray-700"
       >
         <div class="space-y-2">
           <RouterLink
             to="/files"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors md:hidden"
             :class="{
               'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
                 $route.path === '/files',
@@ -184,7 +184,7 @@
           </RouterLink>
           <RouterLink
             to="/notes"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors md:hidden"
             :class="{
               'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
                 $route.path === '/notes',
@@ -197,7 +197,7 @@
           </RouterLink>
           <RouterLink
             to="/recycle"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors md:hidden"
             :class="{
               'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
                 $route.path === '/recycle',
