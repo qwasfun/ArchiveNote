@@ -1,4 +1,4 @@
-"""文件上传增加文件原本的创建和修改时间
+"""add_file_original_time
 
 Revision ID: 26278111e923
 Revises: a065827f390a
