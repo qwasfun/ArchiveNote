@@ -29,7 +29,7 @@ RUN mkdir -p data && pip install uv && uv sync
 # 拷贝前端静态文件到 FastAPI
 COPY --from=frontend-builder /app/web/dist ./app/static
 
-EXPOSE 8000
+EXPOSE 2601
 
 # Uvicorn 启动 FastAPI
-CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "2601"]
