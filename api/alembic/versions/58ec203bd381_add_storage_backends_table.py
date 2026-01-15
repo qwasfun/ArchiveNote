@@ -45,22 +45,27 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_storage_backends_name"), "storage_backends", ["name"], unique=True
     )
-    op.add_column(
-        "files", sa.Column("storage_backend_id", sa.String(length=36), nullable=True)
-    )
-    op.create_foreign_key(
-        "fk_files_storage_backend_id",
-        "files",
-        "storage_backends",
-        ["storage_backend_id"],
-        ["id"],
-    )
+
+    # 使用 batch mode 来支持 SQLite
+    with op.batch_alter_table("files", schema=None) as batch_op:
+        batch_op.add_column(
+            sa.Column("storage_backend_id", sa.String(length=36), nullable=True)
+        )
+        batch_op.create_foreign_key(
+            "fk_files_storage_backend_id",
+            "storage_backends",
+            ["storage_backend_id"],
+            ["id"],
+        )
 
 
 def downgrade() -> None:
     """删除存储后端配置表"""
-    op.drop_constraint("fk_files_storage_backend_id", "files", type_="foreignkey")
-    op.drop_column("files", "storage_backend_id")
+    # 使用 batch mode 来支持 SQLite
+    with op.batch_alter_table("files", schema=None) as batch_op:
+        batch_op.drop_constraint("fk_files_storage_backend_id", type_="foreignkey")
+        batch_op.drop_column("storage_backend_id")
+
     op.drop_index(op.f("ix_storage_backends_name"), table_name="storage_backends")
     op.drop_index(op.f("ix_storage_backends_id"), table_name="storage_backends")
     op.drop_table("storage_backends")

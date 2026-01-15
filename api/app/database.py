@@ -55,14 +55,8 @@ else:
 
 # 对 sqlite 使用特定 connect_args（aiosqlite 的 check_same_thread）
 if DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
     engine = create_async_engine(
-        DATABASE_URL,
-        connect_args=connect_args,
-        pool_size=20,  # 增加连接池大小
-        max_overflow=40,  # 允许超出连接池的额外连接数
-        pool_pre_ping=True,  # 连接前ping确保连接有效
-        pool_recycle=3600,  # 1小时后回收连接
+        DATABASE_URL, connect_args={"check_same_thread": False}
     )
 else:
     engine = create_async_engine(
