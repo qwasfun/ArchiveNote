@@ -23,7 +23,7 @@ from app.schemas import (
     FileResponseModel,
 )
 from app.services.file_type_detector import FileTypeDetector
-from app.services.security import get_current_user
+from app.services.security import get_current_user, get_user_default_workspace
 from app.services.storage import (
     file_exists,
     get_default_storage_backend,
@@ -199,12 +199,16 @@ async def confirm_direct_upload(
     if updated_at.tzinfo is not None:
         updated_at = updated_at.replace(tzinfo=None)
 
+    # 获取用户默认 workspace
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     # 创建文件记录
     now = datetime.utcnow()
     file = File(
         id=str(uuid.uuid4()),
         user_id=str(current_user.id),
         folder_id=folder_id,
+        workspace_id=workspace_id,
         filename=filename,
         storage_path=s3_key,
         storage_backend_id=storage_backend_id,
@@ -257,8 +261,9 @@ async def upload_files(
     # 提交文件夹创建（快速释放连接）
     await db.commit()
 
-    # 获取默认存储后端（异步）
+    # 获取默认存储后端和用户默认 workspace（异步）
     backend, backend_id = await get_default_storage_backend(db)
+    workspace_id = await get_user_default_workspace(current_user, db)
 
     # 第二阶段：并行保存文件到存储（不持有数据库连接）
     async def save_file_async(file: UploadFile, index: int):
@@ -302,6 +307,7 @@ async def upload_files(
         return {
             "user_id": str(current_user.id),
             "folder_id": target_folder_id,
+            "workspace_id": workspace_id,
             "filename": actual_filename,
             "storage_path": storage_path,
             "storage_backend_id": backend_id,

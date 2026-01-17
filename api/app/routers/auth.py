@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.models import User
+from app.models import User, Workspace, workspace_user_association
 from app.services.jwt import (
     REFRESH_TOKEN_EXPIRE_DAYS,
     create_access_token,
@@ -48,6 +48,24 @@ async def register(
     session.add(user)
     await session.commit()
     await session.refresh(user)
+
+    # 创建第一个 Workspace 并将用户设为 owner
+    workspace = Workspace(
+        name=f"{username}'s Workspace",
+        description="Default Workspace",
+        created_by=user.id,
+    )
+    session.add(workspace)
+    await session.commit()
+    await session.refresh(workspace)
+
+    # 建立用户与 Workspace 的关系，角色为 owner
+    stmt = workspace_user_association.insert().values(
+        workspace_id=workspace.id, user_id=user.id, role="owner"
+    )
+    await session.execute(stmt)
+    await session.commit()
+
     access_token = create_access_token(subject=user.username)
     refresh_token = create_refresh_token(subject=user.username)
 

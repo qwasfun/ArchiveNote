@@ -16,6 +16,7 @@ from app.routers import (
     stats,
     storage_backends,
     users,
+    workspaces,
 )
 
 
@@ -30,6 +31,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(workspaces.router)
 app.include_router(files.router)
 app.include_router(notes.router)
 app.include_router(folders.router)
