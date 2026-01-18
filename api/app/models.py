@@ -17,9 +17,28 @@ class User(Base):
     username = Column(String)
     nickname = Column(String)
     password = Column(String)
-    role = Column(String, default="user")  # "admin" or "user"
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SystemAdmin(Base):
+    """系统管理员表"""
+
+    __tablename__ = "system_admins"
+
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    created_at = Column(DateTime, default=datetime.utcnow)
+    granted_by = Column(
+        String(36), ForeignKey("users.id"), nullable=True
+    )  # 授予权限的管理员
 
 
 # Workspace-User Many-to-Many Association Table

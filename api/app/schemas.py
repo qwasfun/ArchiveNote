@@ -10,11 +10,6 @@ class Visibility(str, Enum):
     PUBLIC = "PUBLIC"
 
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    USER = "user"
-
-
 class WorkspaceRole(str, Enum):
     OWNER = "owner"
     ADMIN = "admin"

@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.models import User, Workspace, workspace_user_association
+from app.models import SystemAdmin, User, Workspace, workspace_user_association
 from app.services.jwt import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
@@ -51,13 +51,28 @@ async def get_current_user(
 
 async def get_current_admin_user(
     current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_async_session),
 ) -> User:
-    """验证当前用户是否为管理员"""
-    if current_user.role != "admin":
+    """验证当前用户是否为系统管理员"""
+    stmt = select(SystemAdmin).where(SystemAdmin.user_id == current_user.id)
+    result = await session.execute(stmt)
+    system_admin = result.scalar_one_or_none()
+
+    if not system_admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员才能访问此资源"
+            status_code=status.HTTP_403_FORBIDDEN, detail="只有系统管理员才能访问此资源"
         )
     return current_user
+
+
+async def is_system_admin(
+    user_id: str,
+    session: AsyncSession,
+) -> bool:
+    """检查用户是否为系统管理员"""
+    stmt = select(SystemAdmin).where(SystemAdmin.user_id == user_id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none() is not None
 
 
 async def get_user_workspaces(
