@@ -88,10 +88,13 @@ async def register(
         secure=False,
     )
 
+    # 检查是否为系统管理员
+    is_admin = await is_system_admin(user.id, session)
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "username": user.username},
+        "user": {"id": user.id, "username": user.username, "is_system_admin": is_admin},
     }
 
 
@@ -124,10 +127,13 @@ async def login(
         secure=False,
     )
 
+    # 检查是否为系统管理员
+    is_admin = await is_system_admin(user.id, session)
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "username": user.username},
+        "user": {"id": user.id, "username": user.username, "is_system_admin": is_admin},
     }
 
 
@@ -146,13 +152,13 @@ async def read_current_user(
 
 
 @router.get("/is-system-admin")
-async def check_is_admin(
+async def check_is_system_admin(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
     """检查当前用户是否为系统管理员"""
     is_admin = await is_system_admin(current_user.id, session)
-    return {"is_admin": is_admin}
+    return {"is_system_admin": is_admin}
 
 
 @router.post("/refresh")

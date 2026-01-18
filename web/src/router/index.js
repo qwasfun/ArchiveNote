@@ -72,7 +72,7 @@ router.beforeEach((to, from, next) => {
     if (!authStore.isAuthenticated) {
       // 未登录，跳转到登录页
       next({ name: 'LoginView', query: { redirect: to.fullPath } })
-    } else if (!authStore.isAdmin) {
+    } else if (!authStore.isSystemAdmin) {
       // 已登录但不是管理员，显示错误或跳转到首页
       alert('只有管理员才能访问此页面')
       next({ name: 'home' })

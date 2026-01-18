@@ -9,8 +9,8 @@ export const useAuthStore = defineStore('auth', () => {
   // 计算属性：是否已登录
   const isAuthenticated = computed(() => !!accessToken.value)
 
-  // 计算属性：是否为管理员
-  const isAdmin = computed(() => user.value?.role === 'admin')
+  // 计算属性：是否为系统管理员
+  const isSystemAdmin = computed(() => user.value?.is_system_admin === true)
 
   // 设置认证信息
   const setAuth = (authData) => {
@@ -44,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken,
     user,
     isAuthenticated,
-    isAdmin,
+    isSystemAdmin,
     setAuth,
     clearAuth,
     updateAccessToken,

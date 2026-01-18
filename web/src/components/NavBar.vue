@@ -51,7 +51,7 @@
             </RouterLink>
             <!-- 管理员菜单 -->
             <RouterLink
-              v-if="isAdmin"
+              v-if="isSystemAdmin"
               to="/admin/storage-backends"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="{
@@ -199,7 +199,7 @@
           </RouterLink>
           <!-- 移动端管理员菜单 -->
           <RouterLink
-            v-if="isAdmin"
+            v-if="isSystemAdmin"
             to="/admin/storage-backends"
             class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
             :class="{
@@ -312,8 +312,8 @@ const showMobileMenu = ref(false)
 // 检查是否已登录（直接使用 store 的计算属性）
 const isLoggedIn = computed(() => authStore.isAuthenticated)
 
-// 检查是否为管理员
-const isAdmin = computed(() => authStore.isAdmin)
+// 检查是否为系统管理员
+const isSystemAdmin = computed(() => authStore.isSystemAdmin)
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
