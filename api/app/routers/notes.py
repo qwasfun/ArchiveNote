@@ -19,7 +19,7 @@ class FolderIdsRequest(BaseModel):
 
 
 from app.models import File, Folder, Note, User
-from app.services.security import get_current_user
+from app.services.security import get_current_user, get_user_default_workspace
 
 router = APIRouter(prefix="/api/v1/notes", tags=["Notes"])
 
@@ -30,10 +30,14 @@ async def create_note(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
+    # 获取用户默认 workspace
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     new_note = Note(
         title=note.title,
         content=note.content,
         user_id=current_user.id,
+        workspace_id=workspace_id,
         visibility=note.visibility,
     )
     db.add(new_note)

@@ -95,7 +95,8 @@ class Folder(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 创建者
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     parent_id = Column(String(36), ForeignKey("folders.id"), nullable=True)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -142,7 +143,7 @@ class File(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 上传者
     folder_id = Column(String(36), ForeignKey("folders.id"), nullable=True)
     workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     storage_backend_id = Column(
@@ -197,7 +198,8 @@ class Note(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 创建者
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     # visibility: PRIVATE / PROTECTED / PUBLIC, default PRIVATE

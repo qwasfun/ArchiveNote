@@ -23,13 +23,13 @@ class StorageBackend(ABC):
     """存储后端抽象基类"""
 
     @abstractmethod
-    def save(self, file: UploadFile, user_id: str = None) -> Tuple[str, int, dict]:
+    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
         """
         保存文件
 
         Args:
             file: 上传的文件对象
-            user_id: 用户ID（可选，用于组织文件结构）
+            workspace_id: Workspace ID（用于组织文件结构）
 
         Returns:
             Tuple[storage_path, size, file_type_info]
@@ -99,15 +99,15 @@ class LocalStorageBackend(StorageBackend):
         """将本地文件路径转换为URL友好的格式（使用/作为分隔符）"""
         return filepath.replace("\\", "/")
 
-    def save(self, file: UploadFile, user_id: str = None) -> Tuple[str, int, dict]:
+    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
         """保存文件到本地磁盘"""
         # 生成日期和时间
         now = datetime.now()
         date_dir = now.strftime("%Y%m%d")
 
-        # 构建路径：userid/日期/uuid.ext
-        if user_id:
-            target_dir = os.path.join(self.base_dir, user_id, date_dir)
+        # 构建路径：workspace_id/日期/uuid.ext
+        if workspace_id:
+            target_dir = os.path.join(self.base_dir, workspace_id, date_dir)
         else:
             target_dir = os.path.join(self.base_dir, "anonymous", date_dir)
         os.makedirs(target_dir, exist_ok=True)
@@ -265,14 +265,14 @@ class S3StorageBackend(StorageBackend):
                 # 其他错误，如权限问题等
                 print(f"检查 S3 桶时出错: {e}")
 
-    def _generate_s3_key(self, filename: str, user_id: str = None) -> str:
+    def _generate_s3_key(self, filename: str, workspace_id: str = None) -> str:
         """
         生成 S3 对象键
-        格式：userid/日期/uuid.ext
+        格式：workspace_id/日期/uuid.ext
 
         Args:
             filename: 文件名
-            user_id: 用户ID
+            workspace_id: Workspace ID
 
         Returns:
             S3 对象键
@@ -283,14 +283,14 @@ class S3StorageBackend(StorageBackend):
         file_ext = os.path.splitext(filename)[1]
         new_filename = f"{shortuuid.uuid()}{file_ext}"
 
-        if user_id:
-            return f"{user_id}/{date_str}/{new_filename}"
+        if workspace_id:
+            return f"{workspace_id}/{date_str}/{new_filename}"
         return f"anonymous/{date_str}/{new_filename}"
 
-    def save(self, file: UploadFile, user_id: str = None) -> Tuple[str, int, dict]:
+    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
         """保存文件到 S3"""
         # 生成 S3 键
-        s3_key = self._generate_s3_key(file.filename, user_id)
+        s3_key = self._generate_s3_key(file.filename, workspace_id)
 
         # 读取文件内容
         file_content = file.file.read()

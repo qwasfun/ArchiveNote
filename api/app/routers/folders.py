@@ -16,7 +16,7 @@ from app.schemas import (
     FolderResponse,
     FolderUpdate,
 )
-from app.services.security import get_current_user
+from app.services.security import get_current_user, get_user_default_workspace
 from app.services.storage import delete_file
 
 router = APIRouter(prefix="/api/v1/folders", tags=["Folders"])
@@ -28,8 +28,12 @@ async def create_folder(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
+    # 获取用户默认 workspace
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     new_folder = Folder(
         user_id=current_user.id,
+        workspace_id=workspace_id,
         name=folder.name,
         parent_id=folder.parent_id,
         created_at=datetime.utcnow(),
