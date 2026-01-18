@@ -35,6 +35,7 @@ def _config_to_dict(backend: StorageBackendConfig) -> dict:
 
 def _backend_to_response(backend: StorageBackendConfig) -> StorageBackendResponse:
     """将数据库模型转换为响应模型"""
+    workspace_id_value = getattr(backend, "workspace_id", None)
     return StorageBackendResponse(
         id=str(backend.id),
         name=str(backend.name),
@@ -42,6 +43,7 @@ def _backend_to_response(backend: StorageBackendConfig) -> StorageBackendRespons
         is_active=bool(backend.is_active),
         is_default=bool(backend.is_default),
         allow_client_direct_upload=bool(backend.allow_client_direct_upload),
+        workspace_id=str(workspace_id_value) if workspace_id_value is not None else "",
         config=_config_to_dict(backend),
         description=str(backend.description) if backend.description else None,
         created_at=backend.created_at,

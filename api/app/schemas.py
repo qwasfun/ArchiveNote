@@ -15,6 +15,13 @@ class UserRole(str, Enum):
     USER = "user"
 
 
+class WorkspaceRole(str, Enum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+    READONLY = "readonly"
+
+
 class NoteCreate(BaseModel):
     title: str
     content: str
@@ -206,11 +213,53 @@ class StorageBackendResponse(BaseModel):
     is_active: bool
     is_default: bool
     allow_client_direct_upload: bool  # 是否允许客户端直传（仅S3）
+    workspace_id: str
     config: dict
     description: str | None = None
     created_at: datetime
     updated_at: datetime
     created_by: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkspaceCreate(BaseModel):
+    """创建 Workspace"""
+
+    name: str
+    description: str | None = None
+
+
+class WorkspaceUpdate(BaseModel):
+    """更新 Workspace"""
+
+    name: str | None = None
+    description: str | None = None
+
+
+class WorkspaceResponse(BaseModel):
+    """Workspace 响应"""
+
+    id: str
+    name: str
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    created_by: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkspaceMemberResponse(BaseModel):
+    """Workspace 成员响应"""
+
+    workspace_id: str
+    user_id: str
+    username: str
+    role: WorkspaceRole
+    created_at: datetime
 
     class Config:
         from_attributes = True

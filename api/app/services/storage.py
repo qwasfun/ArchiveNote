@@ -94,7 +94,7 @@ async def get_default_storage_backend(
 
 
 def save_file(
-    file: UploadFile, backend: StorageBackend, user_id: str | None = None
+    file: UploadFile, backend: StorageBackend, workspace_id: str | None = None
 ) -> Tuple[str, int, dict]:
     """
     保存文件 (同步，需在线程池运行)
@@ -102,12 +102,12 @@ def save_file(
     Args:
         file: 上传的文件对象
         backend: 存储后端实例
-        user_id: 用户ID（可选）
+        workspace_id: Workspace ID
 
     Returns:
         Tuple[storage_path, size, file_type_info]
     """
-    return backend.save(file, user_id)
+    return backend.save(file, workspace_id)
 
 
 def delete_file(storage_path: str, backend: StorageBackend) -> bool:

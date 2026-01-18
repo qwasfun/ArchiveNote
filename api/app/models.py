@@ -22,6 +22,54 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
+# Workspace-User Many-to-Many Association Table
+workspace_user_association = Table(
+    "workspace_user_association",
+    Base.metadata,
+    Column(
+        "workspace_id",
+        String(36),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "user_id",
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "role", String, nullable=False, default="member"
+    ),  # owner / admin / member / readonly
+    Column("created_at", DateTime, default=datetime.utcnow),
+)
+
+
+class Workspace(Base):
+    """Workspace - 配置隔离边界"""
+
+    __tablename__ = "workspaces"
+
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+    created_by: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True
+    )
+
+    # Relationships
+    files: Mapped[List["File"]] = relationship("File", back_populates="workspace")
+    storage_backends: Mapped[List["StorageBackendConfig"]] = relationship(
+        "StorageBackendConfig", back_populates="workspace"
+    )
+
+
 # Folder-Note Many-to-Many Association Table
 folder_note_association = Table(
     "folder_note_association",
@@ -47,7 +95,8 @@ class Folder(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 创建者
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     parent_id = Column(String(36), ForeignKey("folders.id"), nullable=True)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -94,8 +143,9 @@ class File(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 上传者
     folder_id = Column(String(36), ForeignKey("folders.id"), nullable=True)
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     storage_backend_id = Column(
         String(36), ForeignKey("storage_backends.id"), nullable=True
     )
@@ -120,8 +170,9 @@ class File(Base):
     is_deleted: Mapped[bool] = mapped_column(Integer, default=0)
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    # Relationship to Folder
+    # Relationships
     folder = relationship("Folder", back_populates="files")
+    workspace = relationship("Workspace", back_populates="files")
 
     # Relationship to Notes
     notes: Mapped[List["Note"]] = relationship(
@@ -147,7 +198,8 @@ class Note(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    user_id = Column(String(36), ForeignKey("users.id"))
+    user_id = Column(String(36), ForeignKey("users.id"))  # 创建者
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     # visibility: PRIVATE / PROTECTED / PUBLIC, default PRIVATE
@@ -175,6 +227,7 @@ class StorageBackendConfig(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
     backend_type: Mapped[str] = mapped_column(String, nullable=False)  # local or s3
     is_active: Mapped[bool] = mapped_column(Integer, default=0)  # 0: False, 1: True
@@ -197,3 +250,6 @@ class StorageBackendConfig(Base):
     created_by: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("users.id"), nullable=True
     )
+
+    # Relationship
+    workspace = relationship("Workspace", back_populates="storage_backends")

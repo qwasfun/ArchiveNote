@@ -23,7 +23,7 @@ from app.schemas import (
     FileResponseModel,
 )
 from app.services.file_type_detector import FileTypeDetector
-from app.services.security import get_current_user
+from app.services.security import get_current_user, get_user_default_workspace
 from app.services.storage import (
     file_exists,
     get_default_storage_backend,
@@ -50,7 +50,11 @@ _file_io_executor = ThreadPoolExecutor(
 
 
 async def get_or_create_folder_by_path(
-    db: AsyncSession, user_id: str, parent_folder_id: Optional[str], folder_path: str
+    db: AsyncSession,
+    user_id: str,
+    workspace_id: str,
+    parent_folder_id: Optional[str],
+    folder_path: str,
 ) -> Optional[str]:
     """
     根据路径创建或获取文件夹，返回最终文件夹的ID
@@ -69,7 +73,7 @@ async def get_or_create_folder_by_path(
 
         # 查找是否已存在该文件夹
         stmt = select(Folder).where(
-            Folder.user_id == user_id,
+            Folder.workspace_id == workspace_id,
             Folder.name == folder_name,
             Folder.is_deleted == 0,
         )
@@ -86,6 +90,7 @@ async def get_or_create_folder_by_path(
             # 创建新文件夹
             folder = Folder(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 parent_id=current_parent_id,
                 name=folder_name,
                 created_at=datetime.utcnow(),
@@ -199,12 +204,16 @@ async def confirm_direct_upload(
     if updated_at.tzinfo is not None:
         updated_at = updated_at.replace(tzinfo=None)
 
+    # 获取用户默认 workspace
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     # 创建文件记录
     now = datetime.utcnow()
     file = File(
         id=str(uuid.uuid4()),
         user_id=str(current_user.id),
         folder_id=folder_id,
+        workspace_id=workspace_id,
         filename=filename,
         storage_path=s3_key,
         storage_backend_id=storage_backend_id,
@@ -243,6 +252,10 @@ async def upload_files(
     file_data_list = []
     folder_cache = {}  # 缓存已创建的文件夹ID
 
+    # 获取默认存储后端和用户默认 workspace（异步）
+    backend, backend_id = await get_default_storage_backend(db)
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     # 先单独处理文件夹结构（需要数据库操作）
     for i, file in enumerate(files):
         relative_path = file.filename or ""
@@ -250,15 +263,12 @@ async def upload_files(
 
         if dir_path and dir_path not in folder_cache:
             target_folder_id = await get_or_create_folder_by_path(
-                db, str(current_user.id), folder_id, dir_path
+                db, str(current_user.id), workspace_id, folder_id, dir_path
             )
             folder_cache[dir_path] = target_folder_id
 
     # 提交文件夹创建（快速释放连接）
     await db.commit()
-
-    # 获取默认存储后端（异步）
-    backend, backend_id = await get_default_storage_backend(db)
 
     # 第二阶段：并行保存文件到存储（不持有数据库连接）
     async def save_file_async(file: UploadFile, index: int):
@@ -273,7 +283,7 @@ async def upload_files(
 
         # 在线程池中执行同步IO
         storage_path, size, file_type_info = await loop.run_in_executor(
-            _file_io_executor, save_file, file, backend, str(current_user.id)
+            _file_io_executor, save_file, file, backend, workspace_id
         )
 
         # 处理时间戳
@@ -302,6 +312,7 @@ async def upload_files(
         return {
             "user_id": str(current_user.id),
             "folder_id": target_folder_id,
+            "workspace_id": workspace_id,
             "filename": actual_filename,
             "storage_path": storage_path,
             "storage_backend_id": backend_id,
