@@ -6,9 +6,11 @@ Create Date: 2026-01-18 15:18:46.178919
 
 """
 
+import uuid
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+from sqlalchemy import DateTime, String, column, table
 
 from alembic import op
 
@@ -39,26 +41,37 @@ def upgrade() -> None:
     op.create_index(op.f("ix_system_admins_id"), "system_admins", ["id"], unique=False)
 
     # 将 role 为 'admin' 的用户迁移到 system_admins 表
-    # 使用原始SQL执行数据迁移
-    op.execute(
-        """
-        INSERT INTO system_admins (id, user_id, created_at, granted_by)
-        SELECT
-            LOWER(HEX(RANDOMBLOB(4)) || '-' || HEX(RANDOMBLOB(2)) || '-4' ||
-                  SUBSTR(HEX(RANDOMBLOB(2)), 2) || '-' ||
-                  SUBSTR('89ab', ABS(RANDOM()) % 4 + 1, 1) ||
-                  SUBSTR(HEX(RANDOMBLOB(2)), 2) || '-' ||
-                  HEX(RANDOMBLOB(6))),
-            id,
-            CURRENT_TIMESTAMP,
-            NULL
-        FROM users
-        WHERE role = 'admin'
-    """
+    # 使用 SQLAlchemy Core 以支持跨数据库
+    conn = op.get_bind()
+    users_table = table("users", column("id", String), column("role", String))
+    system_admins_table = table(
+        "system_admins",
+        column("id", String),
+        column("user_id", String),
+        column("created_at", DateTime),
+        column("granted_by", String),
     )
 
+    # 获取所有 admin 用户
+    admin_users = conn.execute(
+        sa.select(users_table.c.id).where(users_table.c.role == "admin")
+    ).fetchall()
+
+    # 为每个 admin 用户插入 system_admins 记录
+    from datetime import datetime
+
+    for user in admin_users:
+        conn.execute(
+            system_admins_table.insert().values(
+                id=str(uuid.uuid4()),
+                user_id=user.id,
+                created_at=datetime.utcnow(),
+                granted_by=None,
+            )
+        )
+
     # 删除 users 表的 role 列
-    # SQLite 不支持直接删除列，需要重建表
+    # PostgreSQL 支持直接删除列，SQLite 需要使用 batch 模式
     with op.batch_alter_table("users", schema=None) as batch_op:
         batch_op.drop_column("role")
 
