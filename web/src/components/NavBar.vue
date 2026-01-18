@@ -51,7 +51,7 @@
             </RouterLink>
             <!-- 管理员菜单 -->
             <RouterLink
-              v-if="isAdmin"
+              v-if="isSystemAdmin"
               to="/admin/storage-backends"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="{
@@ -199,7 +199,7 @@
           </RouterLink>
           <!-- 移动端管理员菜单 -->
           <RouterLink
-            v-if="isAdmin"
+            v-if="isSystemAdmin"
             to="/admin/storage-backends"
             class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
             :class="{
@@ -261,7 +261,7 @@
             </template>
             <template v-else>
               <RouterLink
-                to="/login"
+                to="/auth/login"
                 class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
                 @click="showMobileMenu = false"
               >
@@ -276,7 +276,7 @@
                 登录
               </RouterLink>
               <RouterLink
-                to="/register"
+                to="/auth/register"
                 class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                 @click="showMobileMenu = false"
               >
@@ -312,8 +312,8 @@ const showMobileMenu = ref(false)
 // 检查是否已登录（直接使用 store 的计算属性）
 const isLoggedIn = computed(() => authStore.isAuthenticated)
 
-// 检查是否为管理员
-const isAdmin = computed(() => authStore.isAdmin)
+// 检查是否为系统管理员
+const isSystemAdmin = computed(() => authStore.isSystemAdmin)
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
