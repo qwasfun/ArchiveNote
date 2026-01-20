@@ -155,7 +155,9 @@ onMounted(() => {
                   <span class="badge badge-outline"
                     >{{ getFileExtension(file.filename) }} 文件</span
                   >
-                  <span class="badge badge-outline badge-warning">在回收站</span>
+                  <span class="badge badge-outline badge-warning" v-if="file.is_deleted === 1"
+                    >在回收站</span
+                  >
                 </div>
               </div>
             </div>
