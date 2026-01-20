@@ -383,6 +383,7 @@ class S3StorageBackend(StorageBackend):
         # 如果配置了公共 URL，使用自定义端点生成签名 URL
         if self.public_url:
             # 使用自定义端点创建临时客户端
+            # 使用 path 样式访问，避免在域名前添加 bucket_name
             public_client = boto3.client(
                 "s3",
                 aws_access_key_id=self.s3_client._request_signer._credentials.access_key,
@@ -394,7 +395,7 @@ class S3StorageBackend(StorageBackend):
                 ),
                 region_name=self.region_name,
                 config=boto3.session.Config(
-                    signature_version="s3", s3={"addressing_style": "virtual"}
+                    signature_version="s3", s3={"addressing_style": "path"}
                 ),
             )
             try:
@@ -409,6 +410,14 @@ class S3StorageBackend(StorageBackend):
                 presigned_url = public_client.generate_presigned_url(
                     "get_object", Params=params, ExpiresIn=3600  # 1 小时
                 )
+
+                # 使用路径样式会生成 https://public_url/bucket_name/key 格式
+                # 需要移除 URL 中的 /bucket_name 部分，使其变为 https://public_url/key
+                # 这样符合自定义域名直接指向 bucket 的场景
+                bucket_path = f"/{self.bucket_name}/"
+                if bucket_path in presigned_url:
+                    presigned_url = presigned_url.replace(bucket_path, "/", 1)
+
                 return presigned_url
             except Exception as e:
                 print(f"使用公共 URL 生成签名 URL 失败: {e}，回退到默认方式")
