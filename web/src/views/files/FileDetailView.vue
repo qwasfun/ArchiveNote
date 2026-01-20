@@ -149,10 +149,15 @@ onMounted(() => {
                 >
                   {{ file.filename }}
                 </h1>
-                <div class="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <span class="badge badge-outline">{{ getFileExtension(file.filename) }}</span>
-                  <span>{{ formatSize(file.size) }}</span>
-                  <span>{{ formatDate(file.created_at) }}</span>
+                <div
+                  class="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400 items-center"
+                >
+                  <span class="badge badge-outline"
+                    >{{ getFileExtension(file.filename) }} 文件</span
+                  >
+                  <span class="badge badge-outline badge-warning" v-if="file.is_deleted === 1"
+                    >在回收站</span
+                  >
                 </div>
               </div>
             </div>
@@ -252,7 +257,11 @@ onMounted(() => {
                   file.notes_count
                 }}</span>
               </button>
-              <button @click="showRenameModal = true" class="btn btn-outline w-full gap-2">
+              <button
+                @click="showRenameModal = true"
+                class="btn btn-outline w-full gap-2"
+                v-if="!file.is_deleted === 1"
+              >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -263,7 +272,11 @@ onMounted(() => {
                 </svg>
                 重命名
               </button>
-              <button @click="handleDelete" class="btn btn-outline btn-error w-full gap-2">
+              <button
+                @click="handleDelete"
+                class="btn btn-outline btn-error w-full gap-2"
+                v-if="!file.is_deleted === 1"
+              >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -396,6 +409,7 @@ onMounted(() => {
                   {{ formatDate(file.updated_at) }}
                 </p>
               </div>
+
               <div v-if="file.original_created_at">
                 <label
                   class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide"
@@ -412,6 +426,15 @@ onMounted(() => {
                 >
                 <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">
                   {{ formatDate(file.original_modified_at) }}
+                </p>
+              </div>
+              <div v-if="file.deleted_at">
+                <label
+                  class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide"
+                  >删除时间</label
+                >
+                <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                  {{ formatDate(file.deleted_at) }}
                 </p>
               </div>
             </div>

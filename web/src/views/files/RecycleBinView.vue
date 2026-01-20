@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import FileGrid from '../../components/FileGrid.vue'
+import FileDetails from '../../components/FileDetails.vue'
+
 import recycleService from '../../api/recycleService.js'
 
 const files = ref([])
@@ -9,6 +11,8 @@ const loading = ref(false)
 const selectedFiles = ref([])
 const selectedFolders = ref([])
 const isSelectionMode = ref(true) // Default to selection mode for easier management
+const detailsFile = ref(null)
+const showDetails = ref(false)
 
 const loadData = async () => {
   loading.value = true
@@ -57,6 +61,16 @@ const permanentDeleteItems = async () => {
   }
 }
 
+const handleViewDetails = (file) => {
+  detailsFile.value = file
+  showDetails.value = true
+}
+
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
+}
+
 onMounted(() => {
   loadData()
 })
@@ -99,9 +113,18 @@ onMounted(() => {
           :selection-mode="isSelectionMode"
           :selected-files="selectedFiles"
           :selected-folders="selectedFolders"
+          :isShowOperationBtn="false"
+          @view-details="handleViewDetails"
           @selection-change="handleSelectionChange"
         />
       </div>
     </div>
+    <!-- 文件详情模态框 -->
+    <FileDetails
+      :file-id="detailsFile && detailsFile.id"
+      :is-open="showDetails"
+      show-manage-notes
+      @close="handleCloseDetails"
+    />
   </div>
 </template>

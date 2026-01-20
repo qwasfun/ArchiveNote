@@ -33,6 +33,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showDelete: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['close', 'manage-notes', 'rename', 'delete', 'download'])
@@ -97,8 +101,11 @@ watch(
             >
               {{ file.filename }}
             </h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {{ getFileExtension(file.filename) }} 文件
+            <p class="flex gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <span class="badge badge-outline">{{ getFileExtension(file.filename) }} 文件</span>
+              <span class="badge badge-outline badge-warning" v-if="file.is_deleted === 1"
+                >在回收站</span
+              >
             </p>
           </div>
         </div>
@@ -390,7 +397,11 @@ watch(
             </svg>
             重命名
           </button>
-          <button @click="$emit('delete', file.id)" class="btn btn-sm btn-outline btn-error gap-2">
+          <button
+            v-if="showDelete"
+            @click="$emit('delete', file.id)"
+            class="btn btn-sm btn-outline btn-error gap-2"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
