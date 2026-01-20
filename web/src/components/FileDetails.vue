@@ -101,8 +101,9 @@ watch(
             >
               {{ file.filename }}
             </h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {{ getFileExtension(file.filename) }} 文件
+            <p class="flex gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <span class="badge badge-outline">{{ getFileExtension(file.filename) }} 文件</span>
+              <span class="badge badge-outline badge-warning">在回收站</span>
             </p>
           </div>
         </div>
