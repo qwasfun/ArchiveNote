@@ -33,6 +33,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showDelete: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['close', 'manage-notes', 'rename', 'delete', 'download'])
@@ -390,7 +394,11 @@ watch(
             </svg>
             重命名
           </button>
-          <button @click="$emit('delete', file.id)" class="btn btn-sm btn-outline btn-error gap-2">
+          <button
+            v-if="showDelete"
+            @click="$emit('delete', file.id)"
+            class="btn btn-sm btn-outline btn-error gap-2"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"

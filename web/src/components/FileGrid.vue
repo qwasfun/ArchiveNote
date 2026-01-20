@@ -25,6 +25,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isShowOperationBtn: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits([
@@ -283,7 +287,10 @@ const hoveredFolder = ref(null)
             </div>
 
             <!-- 操作按钮 -->
-            <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+            <div
+              class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700"
+              v-if="isShowOperationBtn"
+            >
               <button
                 class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
                 @click="$emit('view-details', file)"
