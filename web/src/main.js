@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import Toast from './components/Toast.vue'
+import ToastMessage from './components/ToastMessage.vue'
 
 import './styles/style.css'
 
@@ -13,6 +13,6 @@ app.use(createPinia())
 app.use(router)
 
 // 注册全局组件
-app.component('Toast', Toast)
+app.component('ToastMessage', ToastMessage)
 
 app.mount('#app')

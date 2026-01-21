@@ -12,7 +12,7 @@ const { toast } = useToast()
     <main class="relative">
       <RouterView class="animate-fade-in" />
     </main>
-    <Toast v-model="toast.show" :message="toast.message" :type="toast.type" />
+    <ToastMessage v-model="toast.show" :message="toast.message" :type="toast.type" />
   </div>
 </template>
 
