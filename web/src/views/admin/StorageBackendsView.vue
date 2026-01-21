@@ -510,19 +510,13 @@
         <button>close</button>
       </form>
     </dialog>
-
-    <!-- Toast Notification (DaisyUI doesn't have built-in JS toast, using simple fixed div) -->
-    <div v-if="toast.show" class="toast toast-end z-50">
-      <div class="alert" :class="toast.type === 'success' ? 'alert-success' : 'alert-error'">
-        <span>{{ toast.message }}</span>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import storageBackendService from '@/api/storageBackendService'
+import { useToast } from '@/composables/useToast'
 
 const backends = ref([])
 const loading = ref(true)
@@ -531,11 +525,7 @@ const testingId = ref(null)
 const isEditing = ref(false)
 const currentId = ref(null)
 
-const toast = reactive({
-  show: false,
-  message: '',
-  type: 'success',
-})
+const { showToast } = useToast()
 
 const importing = ref(false)
 const selectedFile = ref(null)
@@ -582,15 +572,6 @@ watch(
     }
   },
 )
-
-const showToast = (message, type = 'success') => {
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  setTimeout(() => {
-    toast.show = false
-  }, 3000)
-}
 
 const fetchBackends = async () => {
   loading.value = true

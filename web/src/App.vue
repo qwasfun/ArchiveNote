@@ -1,6 +1,9 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import { useToast } from './composables/useToast'
+
+const { toast } = useToast()
 </script>
 
 <template>
@@ -9,6 +12,7 @@ import NavBar from './components/NavBar.vue'
     <main class="relative">
       <RouterView class="animate-fade-in" />
     </main>
+    <ToastMessage v-model="toast.show" :message="toast.message" :type="toast.type" />
   </div>
 </template>
 
