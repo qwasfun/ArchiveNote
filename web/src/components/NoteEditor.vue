@@ -49,7 +49,7 @@
             placeholder="输入笔记标题..."
             class="w-full px-4 py-3 text-lg border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
           />
-          <button @click="showSelector = true" class="btn btn-lg btn-primary ml-2 rounded-lg">
+          <button @click="handleShowSelector" class="btn btn-lg btn-primary ml-2 rounded-lg">
             ＋ 关联
           </button>
         </div>
@@ -208,6 +208,9 @@
 import { ref, watch } from 'vue'
 import noteService from '../api/noteService'
 import FileFolderSelector from './FileFolderSelector.vue'
+import { useToast } from '@/composables/useToast'
+import { getFileIcon, getFileTypeColor } from '@/utils/file'
+import { formatSize } from '@/utils/format'
 
 const props = defineProps({
   note: {
@@ -224,35 +227,7 @@ const attachedFiles = ref([])
 const attachedFolders = ref([])
 const showSelector = ref(false)
 
-// 文件相关辅助函数
-const getFileIcon = (mimeType) => {
-  if (!mimeType) return '📁'
-  if (mimeType.startsWith('image/')) return '🖼️'
-  if (mimeType.startsWith('video/')) return '🎥'
-  if (mimeType === 'application/pdf') return '📄'
-  if (mimeType.startsWith('audio/')) return '🎵'
-  if (mimeType.includes('document') || mimeType.includes('word')) return '📝'
-  if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊'
-  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return '📋'
-  return '📁'
-}
-
-const getFileTypeColor = (mimeType) => {
-  if (!mimeType) return 'bg-gray-100 text-gray-600'
-  if (mimeType.startsWith('image/')) return 'bg-green-100 text-green-600'
-  if (mimeType.startsWith('video/')) return 'bg-blue-100 text-blue-600'
-  if (mimeType === 'application/pdf') return 'bg-red-100 text-red-600'
-  if (mimeType.startsWith('audio/')) return 'bg-purple-100 text-purple-600'
-  return 'bg-gray-100 text-gray-600'
-}
-
-const formatSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
+const { showToast } = useToast()
 
 // 监听属性变化
 watch(
@@ -285,11 +260,19 @@ const handleSubmit = () => {
   })
 }
 
+const handleShowSelector = () => {
+  if (!props.note || !props.note.id) {
+    showToast('请先保存笔记，再关联文件和文件夹', 'warning')
+    return
+  }
+  showSelector.value = true
+}
+
 const handleAttachItems = async ({ files: fileIds, folders: folderIds }) => {
   showSelector.value = false
 
   if (!props.note || !props.note.id) {
-    alert('请先保存笔记，然后再关联文件和文件夹')
+    showToast('请先保存笔记，再关联文件和文件夹', 'warning')
     return
   }
 
@@ -311,7 +294,7 @@ const handleAttachItems = async ({ files: fileIds, folders: folderIds }) => {
     attachedFolders.value = response.folders || []
   } catch (error) {
     console.error('Failed to attach items', error)
-    alert('关联失败')
+    showToast('关联失败', 'error')
   }
 }
 
@@ -325,7 +308,7 @@ const handleDetachFile = async (fileId) => {
     attachedFiles.value = attachedFiles.value.filter((file) => file.id !== fileId)
   } catch (error) {
     console.error('Failed to detach file', error)
-    alert('移除文件关联失败')
+    showToast('移除文件关联失败', 'error')
   }
 }
 
@@ -339,7 +322,7 @@ const handleDetachFolder = async (folderId) => {
     attachedFolders.value = attachedFolders.value.filter((folder) => folder.id !== folderId)
   } catch (error) {
     console.error('Failed to detach folder', error)
-    alert('移除文件夹关联失败')
+    showToast('移除文件夹关联失败', 'error')
   }
 }
 </script>
