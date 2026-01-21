@@ -519,7 +519,6 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import storageBackendService from '@/api/storageBackendService'
-import Toast from '@/components/Toast.vue'
 import { useToast } from '@/composables/useToast'
 
 const backends = ref([])
