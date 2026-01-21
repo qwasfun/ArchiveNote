@@ -510,9 +510,6 @@
         <button>close</button>
       </form>
     </dialog>
-
-    <!-- Toast Notification -->
-    <Toast v-model="toast.show" :message="toast.message" :type="toast.type" />
   </div>
 </template>
 
@@ -528,7 +525,7 @@ const testingId = ref(null)
 const isEditing = ref(false)
 const currentId = ref(null)
 
-const { toast, showToast } = useToast()
+const { showToast } = useToast()
 
 const importing = ref(false)
 const selectedFile = ref(null)

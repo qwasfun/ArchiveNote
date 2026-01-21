@@ -1,12 +1,13 @@
 import { reactive } from 'vue'
 
-export function useToast() {
-  const toast = reactive({
-    show: false,
-    message: '',
-    type: 'success',
-  })
+// 全局单例状态
+const toast = reactive({
+  show: false,
+  message: '',
+  type: 'success',
+})
 
+export function useToast() {
   const showToast = (message, type = 'success') => {
     toast.message = message
     toast.type = type
