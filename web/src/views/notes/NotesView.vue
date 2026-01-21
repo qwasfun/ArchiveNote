@@ -84,15 +84,25 @@ const handleEdit = (note) => {
 
 const handleSave = async (noteData) => {
   try {
+    let savedNoteId
     if (selectedNote.value && selectedNote.value.id) {
       await noteService.updateNote(selectedNote.value.id, noteData)
+      savedNoteId = selectedNote.value.id
     } else {
-      await noteService.createNote(noteData)
+      const response = await noteService.createNote(noteData)
+      savedNoteId = response.id
     }
+
     showToast('笔记已保存')
 
     // 重新加载笔记列表
     await loadNotes()
+
+    // 找到刚保存的笔记并显示预览
+    const savedNote = notes.value.find((note) => note.id === savedNoteId)
+    if (savedNote) {
+      selectedNote.value = { ...savedNote }
+    }
   } catch (error) {
     console.error('Failed to save note', error)
   }
