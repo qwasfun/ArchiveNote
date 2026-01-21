@@ -709,40 +709,40 @@ onMounted(async () => {
             class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
           >
             <FileGrid
-            :files="files"
-            :folders="folders"
-            :selection-mode="isSelectionMode"
-            :selected-files="selectedFiles"
-            :selected-folders="selectedFolders"
-            @view-details="handleViewDetails"
-            @selection-change="handleSelectionChange"
-            @delete-file="handleDelete"
-            @manage-notes="handleManageNotes"
-            @open-folder="openFolder"
-            @delete-folder="deleteFolder"
-            @edit-folder="openRenameFolderModal"
-            @rename-file="handleRenameFile"
-          />
-          <!-- Pagination -->
-          <div class="flex justify-center mt-6" v-if="totalPages > 1">
-            <div class="join">
-              <button
-                class="join-item btn"
-                :disabled="currentPage === 1"
-                @click="handlePageChange(currentPage - 1)"
-              >
-                «
-              </button>
-              <button class="join-item btn">Page {{ currentPage }} of {{ totalPages }}</button>
-              <button
-                class="join-item btn"
-                :disabled="currentPage === totalPages"
-                @click="handlePageChange(currentPage + 1)"
-              >
-                »
-              </button>
+              :files="files"
+              :folders="folders"
+              :selection-mode="isSelectionMode"
+              :selected-files="selectedFiles"
+              :selected-folders="selectedFolders"
+              @view-details="handleViewDetails"
+              @selection-change="handleSelectionChange"
+              @delete-file="handleDelete"
+              @manage-notes="handleManageNotes"
+              @open-folder="openFolder"
+              @delete-folder="deleteFolder"
+              @edit-folder="openRenameFolderModal"
+              @rename-file="handleRenameFile"
+            />
+            <!-- Pagination -->
+            <div class="flex justify-center mt-6" v-if="totalPages > 1">
+              <div class="join">
+                <button
+                  class="join-item btn"
+                  :disabled="currentPage === 1"
+                  @click="handlePageChange(currentPage - 1)"
+                >
+                  «
+                </button>
+                <button class="join-item btn">Page {{ currentPage }} of {{ totalPages }}</button>
+                <button
+                  class="join-item btn"
+                  :disabled="currentPage === totalPages"
+                  @click="handlePageChange(currentPage + 1)"
+                >
+                  »
+                </button>
+              </div>
             </div>
-          </div>
           </div>
         </DragUploadZone>
       </div>

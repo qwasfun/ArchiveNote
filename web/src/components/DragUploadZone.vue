@@ -240,13 +240,7 @@ defineExpose({
     @drop="handleDrop"
   >
     <!-- 隐藏的文件输入框 -->
-    <input
-      ref="fileInput"
-      type="file"
-      multiple
-      class="hidden"
-      @change="handleFileSelect"
-    />
+    <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileSelect" />
 
     <!-- 隐藏的文件夹输入框 -->
     <input

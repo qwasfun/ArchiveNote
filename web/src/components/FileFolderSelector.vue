@@ -229,143 +229,146 @@ onMounted(() => {
 
       <div v-else>
         <!-- 文件夹列表 -->
-      <div v-if="showFolders && folders.length > 0" class="mb-4">
-        <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
-          <span class="mr-2">📁</span> 文件夹
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <div
-            v-for="folder in folders"
-            :key="folder.id"
-            class="relative flex items-center gap-3 p-3 bg-base-200 border-2 rounded-lg cursor-pointer transition-colors"
-            :class="
-              selectedFolders.includes(folder.id)
-                ? 'border-primary'
-                : 'border-transparent hover:border-base-300'
-            "
-          >
-            <div class="flex-none">
-              <input
-                type="checkbox"
-                class="checkbox checkbox-primary"
-                :checked="
-                  selectedFolders.includes(folder.id) || props.excludeFolderIds.includes(folder.id)
-                "
-                :disabled="props.excludeFolderIds.includes(folder.id)"
-                @click.stop="toggleFolderSelection(folder.id)"
-              />
-            </div>
-            <div class="flex-1 flex items-center gap-3" @click="enterFolder(folder)">
-              <div class="text-2xl">📁</div>
-              <div class="flex-1">
-                <h4 class="font-medium text-sm">{{ folder.name }}</h4>
-                <p class="text-xs text-base-content/60">
-                  {{ new Date(folder.updated_at).toLocaleDateString() }}
-                </p>
-              </div>
-              <div class="text-base-content/40">→</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- 文件夹底部：分页和操作 -->
-      <div class="mt-4 pt-4 border-t border-base-200 space-y-3">
-        <!-- 分页 -->
-        <div v-if="showFolders && totalFoldersPages > 1" class="flex justify-center">
-          <div class="join">
-            <button
-              class="join-item btn btn-sm"
-              :disabled="currentFolderPage === 1"
-              @click="changeFolderPage(currentFolderPage - 1)"
-            >
-              «
-            </button>
-            <button class="join-item btn btn-sm">
-              Page {{ currentFolderPage }} / {{ totalFoldersPages || 1 }}
-            </button>
-            <button
-              class="join-item btn btn-sm"
-              :disabled="currentFolderPage >= totalFoldersPages"
-              @click="changeFolderPage(currentFolderPage + 1)"
-            >
-              »
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 文件列表 -->
-      <div v-if="showFiles && files.length > 0">
-        <h3
-          v-if="showFolders"
-          class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center"
-        >
-          <span class="mr-2">📄</span> 文件
-        </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          <div
-            v-for="file in files"
-            :key="file.id"
-            class="card bg-base-200 border-2 cursor-pointer relative h-32"
-            :class="
-              selectedFiles.includes(file.id)
-                ? 'border-primary'
-                : 'border-transparent hover:border-base-300'
-            "
-            @click="toggleFileSelection(file.id)"
-          >
+        <div v-if="showFolders && folders.length > 0" class="mb-4">
+          <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
+            <span class="mr-2">📁</span> 文件夹
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <div
-              v-if="props.excludeFileIds.includes(file.id)"
-              class="absolute inset-0 bg-base-300/50 cursor-not-allowed z-10 flex items-center justify-center rounded-lg"
+              v-for="folder in folders"
+              :key="folder.id"
+              class="relative flex items-center gap-3 p-3 bg-base-200 border-2 rounded-lg cursor-pointer transition-colors"
+              :class="
+                selectedFolders.includes(folder.id)
+                  ? 'border-primary'
+                  : 'border-transparent hover:border-base-300'
+              "
             >
-              <span class="badge">已关联</span>
-            </div>
-
-            <figure class="h-20 flex items-center justify-center bg-base-300 overflow-hidden">
-              <img
-                v-if="isImage(file.mime_type)"
-                :src="file.preview_url"
-                class="w-full h-full object-cover opacity-80"
-              />
-              <span v-else class="text-3xl">{{ getFileIcon(file.mime_type) }}</span>
-            </figure>
-            <div class="p-2 text-xs truncate font-medium text-center">
-              {{ file.filename }}
-            </div>
-
-            <!-- v-if="selectedFiles.includes(file.id)" -->
-            <div class="absolute top-2 left-2">
-              <input
-                type="checkbox"
-                class="checkbox checkbox-primary"
-                :checked="selectedFiles.includes(file.id) || props.excludeFileIds.includes(file.id)"
-                :disabled="props.excludeFolderIds.includes(file.id)"
-              />
-              <!-- @click.stop="toggleFileSelection(file.id)" -->
+              <div class="flex-none">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary"
+                  :checked="
+                    selectedFolders.includes(folder.id) ||
+                    props.excludeFolderIds.includes(folder.id)
+                  "
+                  :disabled="props.excludeFolderIds.includes(folder.id)"
+                  @click.stop="toggleFolderSelection(folder.id)"
+                />
+              </div>
+              <div class="flex-1 flex items-center gap-3" @click="enterFolder(folder)">
+                <div class="text-2xl">📁</div>
+                <div class="flex-1">
+                  <h4 class="font-medium text-sm">{{ folder.name }}</h4>
+                  <p class="text-xs text-base-content/60">
+                    {{ new Date(folder.updated_at).toLocaleDateString() }}
+                  </p>
+                </div>
+                <div class="text-base-content/40">→</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        <!-- 文件夹底部：分页和操作 -->
+        <div class="mt-4 pt-4 border-t border-base-200 space-y-3">
+          <!-- 分页 -->
+          <div v-if="showFolders && totalFoldersPages > 1" class="flex justify-center">
+            <div class="join">
+              <button
+                class="join-item btn btn-sm"
+                :disabled="currentFolderPage === 1"
+                @click="changeFolderPage(currentFolderPage - 1)"
+              >
+                «
+              </button>
+              <button class="join-item btn btn-sm">
+                Page {{ currentFolderPage }} / {{ totalFoldersPages || 1 }}
+              </button>
+              <button
+                class="join-item btn btn-sm"
+                :disabled="currentFolderPage >= totalFoldersPages"
+                @click="changeFolderPage(currentFolderPage + 1)"
+              >
+                »
+              </button>
+            </div>
+          </div>
+        </div>
 
-      <div
-        v-else-if="folders.length === 0 && files.length === 0"
-        class="text-center py-12 text-base-content/50"
-      >
-        <svg
-          class="w-16 h-16 mx-auto mb-4 text-gray-300"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        <!-- 文件列表 -->
+        <div v-if="showFiles && files.length > 0">
+          <h3
+            v-if="showFolders"
+            class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center"
+          >
+            <span class="mr-2">📄</span> 文件
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div
+              v-for="file in files"
+              :key="file.id"
+              class="card bg-base-200 border-2 cursor-pointer relative h-32"
+              :class="
+                selectedFiles.includes(file.id)
+                  ? 'border-primary'
+                  : 'border-transparent hover:border-base-300'
+              "
+              @click="toggleFileSelection(file.id)"
+            >
+              <div
+                v-if="props.excludeFileIds.includes(file.id)"
+                class="absolute inset-0 bg-base-300/50 cursor-not-allowed z-10 flex items-center justify-center rounded-lg"
+              >
+                <span class="badge">已关联</span>
+              </div>
+
+              <figure class="h-20 flex items-center justify-center bg-base-300 overflow-hidden">
+                <img
+                  v-if="isImage(file.mime_type)"
+                  :src="file.preview_url"
+                  class="w-full h-full object-cover opacity-80"
+                />
+                <span v-else class="text-3xl">{{ getFileIcon(file.mime_type) }}</span>
+              </figure>
+              <div class="p-2 text-xs truncate font-medium text-center">
+                {{ file.filename }}
+              </div>
+
+              <!-- v-if="selectedFiles.includes(file.id)" -->
+              <div class="absolute top-2 left-2">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary"
+                  :checked="
+                    selectedFiles.includes(file.id) || props.excludeFileIds.includes(file.id)
+                  "
+                  :disabled="props.excludeFolderIds.includes(file.id)"
+                />
+                <!-- @click.stop="toggleFileSelection(file.id)" -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else-if="folders.length === 0 && files.length === 0"
+          class="text-center py-12 text-base-content/50"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-          ></path>
-        </svg>
-        <p>{{ currentFolderId ? '此文件夹为空' : '未找到内容' }}</p>
-      </div>
+          <svg
+            class="w-16 h-16 mx-auto mb-4 text-gray-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+            ></path>
+          </svg>
+          <p>{{ currentFolderId ? '此文件夹为空' : '未找到内容' }}</p>
+        </div>
       </div>
     </DragUploadZone>
 
