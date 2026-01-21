@@ -1,3 +1,62 @@
+<script setup>
+import { ref, computed, watch } from 'vue'
+
+const props = defineProps({
+  message: {
+    type: String,
+    default: '',
+  },
+  type: {
+    type: String,
+    default: 'success',
+    validator: (value) => ['success', 'error', 'warning', 'info'].includes(value),
+  },
+  duration: {
+    type: Number,
+    default: 3000,
+  },
+  modelValue: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+const show = ref(props.modelValue)
+let timer = null
+
+const alertClass = computed(() => {
+  const classes = {
+    success: 'alert-success',
+    error: 'alert-error',
+    warning: 'alert-warning',
+    info: 'alert-info',
+  }
+  return classes[props.type] || 'alert-success'
+})
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    show.value = newValue
+    if (newValue && props.duration > 0) {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        show.value = false
+        emit('update:modelValue', false)
+      }, props.duration)
+    }
+  },
+)
+
+watch(show, (newValue) => {
+  if (!newValue) {
+    emit('update:modelValue', false)
+  }
+})
+</script>
+
 <template>
   <div v-if="show" class="toast toast-end z-50">
     <div class="alert" :class="alertClass">
@@ -61,62 +120,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, watch } from 'vue'
-
-const props = defineProps({
-  message: {
-    type: String,
-    default: '',
-  },
-  type: {
-    type: String,
-    default: 'success',
-    validator: (value) => ['success', 'error', 'warning', 'info'].includes(value),
-  },
-  duration: {
-    type: Number,
-    default: 3000,
-  },
-  modelValue: {
-    type: Boolean,
-    default: false,
-  },
-})
-
-const emit = defineEmits(['update:modelValue'])
-
-const show = ref(props.modelValue)
-let timer = null
-
-const alertClass = computed(() => {
-  const classes = {
-    success: 'alert-success',
-    error: 'alert-error',
-    warning: 'alert-warning',
-    info: 'alert-info',
-  }
-  return classes[props.type] || 'alert-success'
-})
-
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    show.value = newValue
-    if (newValue && props.duration > 0) {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        show.value = false
-        emit('update:modelValue', false)
-      }, props.duration)
-    }
-  },
-)
-
-watch(show, (newValue) => {
-  if (!newValue) {
-    emit('update:modelValue', false)
-  }
-})
-</script>
