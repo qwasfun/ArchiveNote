@@ -19,8 +19,6 @@ const props = defineProps({
 })
 
 
-
-
 const emit = defineEmits(['upload-start', 'upload-progress', 'upload-complete', 'upload-error'])
 
 const isDragging = ref(false)
