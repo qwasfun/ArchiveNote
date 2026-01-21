@@ -5,6 +5,7 @@ import FileUpload from '../../components/FileUpload.vue'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
+import DragUploadZone from '../../components/DragUploadZone.vue'
 import fileService from '../../api/fileService.js'
 import folderService from '../../api/folderService.js'
 import storageBackendService from '../../api/storageBackendService.js'
@@ -394,6 +395,11 @@ const buildBreadcrumbs = async (folderId) => {
   }
 }
 
+// 处理拖拽上传完成
+const handleDragUploadComplete = async () => {
+  await loadData()
+}
+
 // 监听路由查询参数变化
 watch(
   () => route.query.folder_id,
@@ -693,46 +699,52 @@ onMounted(async () => {
           <p class="text-gray-500">请尝试修改搜索关键词或过滤条件</p>
         </div>
 
-        <div
+        <DragUploadZone
           v-else
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          :folder-id="currentFolderId"
+          :upload-mode="uploadMode"
+          @upload-complete="handleDragUploadComplete"
         >
-          <FileGrid
-            :files="files"
-            :folders="folders"
-            :selection-mode="isSelectionMode"
-            :selected-files="selectedFiles"
-            :selected-folders="selectedFolders"
-            @view-details="handleViewDetails"
-            @selection-change="handleSelectionChange"
-            @delete-file="handleDelete"
-            @manage-notes="handleManageNotes"
-            @open-folder="openFolder"
-            @delete-folder="deleteFolder"
-            @edit-folder="openRenameFolderModal"
-            @rename-file="handleRenameFile"
-          />
-          <!-- Pagination -->
-          <div class="flex justify-center mt-6" v-if="totalPages > 1">
-            <div class="join">
-              <button
-                class="join-item btn"
-                :disabled="currentPage === 1"
-                @click="handlePageChange(currentPage - 1)"
-              >
-                «
-              </button>
-              <button class="join-item btn">Page {{ currentPage }} of {{ totalPages }}</button>
-              <button
-                class="join-item btn"
-                :disabled="currentPage === totalPages"
-                @click="handlePageChange(currentPage + 1)"
-              >
-                »
-              </button>
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          >
+            <FileGrid
+              :files="files"
+              :folders="folders"
+              :selection-mode="isSelectionMode"
+              :selected-files="selectedFiles"
+              :selected-folders="selectedFolders"
+              @view-details="handleViewDetails"
+              @selection-change="handleSelectionChange"
+              @delete-file="handleDelete"
+              @manage-notes="handleManageNotes"
+              @open-folder="openFolder"
+              @delete-folder="deleteFolder"
+              @edit-folder="openRenameFolderModal"
+              @rename-file="handleRenameFile"
+            />
+            <!-- Pagination -->
+            <div class="flex justify-center mt-6" v-if="totalPages > 1">
+              <div class="join">
+                <button
+                  class="join-item btn"
+                  :disabled="currentPage === 1"
+                  @click="handlePageChange(currentPage - 1)"
+                >
+                  «
+                </button>
+                <button class="join-item btn">Page {{ currentPage }} of {{ totalPages }}</button>
+                <button
+                  class="join-item btn"
+                  :disabled="currentPage === totalPages"
+                  @click="handlePageChange(currentPage + 1)"
+                >
+                  »
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </DragUploadZone>
       </div>
     </div>
 
