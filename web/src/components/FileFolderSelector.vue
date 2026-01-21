@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import fileService from '../api/fileService'
 import folderService from '../api/folderService'
 import { getFileIcon, isImage } from '@/utils/file'
+import DragUploadZone from './DragUploadZone.vue'
 
 const props = defineProps({
   excludeFileIds: {
@@ -16,6 +17,10 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'both', // 'files', 'folders', 'both'
+  },
+  uploadMode: {
+    type: String,
+    default: 'traditional',
   },
 })
 
@@ -159,6 +164,10 @@ const handleSearch = () => {
   }, 300)
 }
 
+const handleDragUploadComplete = async () => {
+  await loadData()
+}
+
 onMounted(() => {
   loadData()
 })
@@ -208,12 +217,18 @@ onMounted(() => {
     </div>
 
     <!-- 内容区域 -->
-    <div v-if="loading" class="flex-1 flex justify-center items-center">
-      <span class="loading loading-spinner loading-lg"></span>
-    </div>
+    <DragUploadZone
+      :folder-id="currentFolderId"
+      :upload-mode="uploadMode"
+      @upload-complete="handleDragUploadComplete"
+      class="flex-1 overflow-y-auto"
+    >
+      <div v-if="loading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
 
-    <div v-else class="flex-1 overflow-y-auto">
-      <!-- 文件夹列表 -->
+      <div v-else>
+        <!-- 文件夹列表 -->
       <div v-if="showFolders && folders.length > 0" class="mb-4">
         <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
           <span class="mr-2">📁</span> 文件夹
@@ -332,9 +347,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 空状态 -->
       <div
-        v-if="folders.length === 0 && files.length === 0"
+        v-else-if="folders.length === 0 && files.length === 0"
         class="text-center py-12 text-base-content/50"
       >
         <svg
@@ -352,7 +366,8 @@ onMounted(() => {
         </svg>
         <p>{{ currentFolderId ? '此文件夹为空' : '未找到内容' }}</p>
       </div>
-    </div>
+      </div>
+    </DragUploadZone>
 
     <!-- 底部：分页和操作 -->
     <div class="mt-4 pt-4 border-t border-base-200 space-y-3">

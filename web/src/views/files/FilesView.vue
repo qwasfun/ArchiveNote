@@ -5,6 +5,7 @@ import FileUpload from '../../components/FileUpload.vue'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
+import DragUploadZone from '../../components/DragUploadZone.vue'
 import fileService from '../../api/fileService.js'
 import folderService from '../../api/folderService.js'
 import storageBackendService from '../../api/storageBackendService.js'
@@ -394,6 +395,11 @@ const buildBreadcrumbs = async (folderId) => {
   }
 }
 
+// 处理拖拽上传完成
+const handleDragUploadComplete = async () => {
+  await loadData()
+}
+
 // 监听路由查询参数变化
 watch(
   () => route.query.folder_id,
@@ -693,11 +699,16 @@ onMounted(async () => {
           <p class="text-gray-500">请尝试修改搜索关键词或过滤条件</p>
         </div>
 
-        <div
+        <DragUploadZone
           v-else
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          :folder-id="currentFolderId"
+          :upload-mode="uploadMode"
+          @upload-complete="handleDragUploadComplete"
         >
-          <FileGrid
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          >
+            <FileGrid
             :files="files"
             :folders="folders"
             :selection-mode="isSelectionMode"
@@ -732,7 +743,8 @@ onMounted(async () => {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </DragUploadZone>
       </div>
     </div>
 
