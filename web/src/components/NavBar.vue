@@ -90,14 +90,14 @@
               @keyup.enter="handleSearch"
               type="text"
               placeholder="搜索文件和笔记..."
-              class="w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+              class="w-56 pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
             />
           </div>
 
           <!-- 用户认证按钮 -->
           <div class="flex items-center gap-2">
             <template v-if="isLoggedIn">
-              <button @click="handleLogout" class="btn btn-sm btn-ghost gap-2">
+              <button @click="handleLogout" class="btn btn-sm btn-ghost gap-2 hidden lg:flex">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -121,7 +121,7 @@
                 </svg>
                 登录
               </RouterLink>
-              <RouterLink to="/auth/register" class="btn btn-sm btn-primary gap-2">
+              <RouterLink to="/auth/register" class="btn btn-sm btn-primary gap-2 hidden lg:flex">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -201,7 +201,7 @@
           <RouterLink
             v-if="isSystemAdmin"
             to="/admin/storage-backends"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors md:hidden"
             :class="{
               'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300':
                 $route.path.startsWith('/admin'),
