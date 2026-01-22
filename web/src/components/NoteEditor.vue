@@ -145,7 +145,7 @@
         </div>
       </div>
       <!-- 内容编辑 -->
-      <div class="flex-1 flex flex-col min-h-50">
+      <div class="flex-1 flex flex-col min-h-80">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           笔记内容
         </label>

@@ -119,7 +119,7 @@ onMounted(async () => {
 
 <template>
   <div class="bg-gray-50 dark:bg-gray-900 min-h-[calc(100vh-64px)]">
-    <div class="container mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-6 flex flex-row">
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center items-center py-12">
         <div class="text-center">
@@ -129,15 +129,12 @@ onMounted(async () => {
       </div>
 
       <!-- Editor Mode -->
-      <div v-else-if="isEditing && note" class="max-w-7xl mx-auto">
-        <div class="mb-4">
-          <button class="btn btn-ghost btn-sm" @click="handleCancel">← 取消编辑</button>
-        </div>
+      <div v-else-if="isEditing && note" class="mx-auto flex-1 pb-2 overflow-auto">
         <NoteEditor :note="note" @save="handleSave" @cancel="handleCancel" />
       </div>
 
       <!-- View Mode -->
-      <div v-else-if="note" class="max-w-7xl mx-auto">
+      <div v-else-if="note" class="flex-1 mx-auto">
         <!-- Header -->
         <div class="mb-6">
           <div class="flex items-center gap-4 mb-4">
