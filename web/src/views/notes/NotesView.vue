@@ -328,11 +328,11 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex-1 overflow-y-auto p-6">
+          <div class="flex-1 overflow-y-auto px-6">
             <!-- 关联文件夹列表 -->
             <div
               v-if="selectedNote.folders && selectedNote.folders.length > 0"
-              class="border-b border-gray-200 dark:border-gray-700 mb-3 mt-3 pb-4"
+              class="border-b border-gray-200 dark:border-gray-700 mt-3 pb-4"
             >
               <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
                 <span>📁</span>
@@ -359,7 +359,7 @@ onMounted(async () => {
             <!-- 关联文件列表 -->
             <div
               v-if="selectedNote.files && selectedNote.files.length > 0"
-              class="border-b border-gray-200 dark:border-gray-700 mb-3 mt-3 pb-4"
+              class="border-b border-gray-200 dark:border-gray-700 mt-3 pb-4"
             >
               <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
                 <span>📎</span>
@@ -398,7 +398,7 @@ onMounted(async () => {
               </div>
             </div>
             <!-- 笔记内容 -->
-            <div class="prose dark:prose-invert max-w-none mt-4 overflow-auto">
+            <div class="prose dark:prose-invert max-w-none overflow-auto">
               <div v-html="renderedContent"></div>
             </div>
           </div>
