@@ -7,6 +7,7 @@ import noteService from '../../api/noteService.js'
 import fileService from '../../api/fileService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
 import FileDetails from '../../components/FileDetails.vue'
+import { useToast } from '@/composables/useToast'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -25,6 +26,8 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const totalNotes = ref(0)
 const totalPages = ref(0)
+
+const { showToast } = useToast()
 
 const loadNotes = async () => {
   loading.value = true
@@ -90,6 +93,8 @@ const handleSave = async (noteData) => {
       savedNoteId = response.id
     }
 
+    showToast('笔记已保存')
+
     // 重新加载笔记列表
     await loadNotes()
 
@@ -97,8 +102,6 @@ const handleSave = async (noteData) => {
     const savedNote = notes.value.find((note) => note.id === savedNoteId)
     if (savedNote) {
       selectedNote.value = { ...savedNote }
-      isEditing.value = false
-      isViewing.value = true
     }
   } catch (error) {
     console.error('Failed to save note', error)
