@@ -121,7 +121,7 @@ onMounted(async () => {
   <div class="bg-gray-50 dark:bg-gray-900 min-h-[calc(100vh-64px)]">
     <div class="container mx-auto px-4 py-6 flex flex-row">
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-12">
+      <div v-if="loading" class="flex-1 justify-center items-center py-12">
         <div class="text-center">
           <span class="loading loading-spinner loading-lg text-blue-500"></span>
           <p class="text-gray-500 mt-2">加载中...</p>
