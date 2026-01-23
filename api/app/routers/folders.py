@@ -65,7 +65,7 @@ async def list_folders(
 
     if parent_id:
         stmt = stmt.where(Folder.parent_id == parent_id)
-    else:
+    elif not q:
         stmt = stmt.where(Folder.parent_id.is_(None))
 
     if q:

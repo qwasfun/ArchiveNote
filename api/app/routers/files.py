@@ -435,7 +435,7 @@ async def list_files(
 
     if folder_id:
         stmt = stmt.where(File.folder_id == folder_id)
-    else:
+    elif not q:
         stmt = stmt.where(File.folder_id.is_(None))
 
     if q:
