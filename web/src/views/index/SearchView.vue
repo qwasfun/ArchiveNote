@@ -196,21 +196,6 @@
                     <h3 class="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">
                       {{ note.title || '无标题' }}
                     </h3>
-                    <div class="shrink-0 ml-2">
-                      <button
-                        @click.stop="editNote(note)"
-                        class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
-                      >
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          ></path>
-                        </svg>
-                      </button>
-                    </div>
                   </div>
                   <p
                     class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4"
@@ -385,11 +370,7 @@ const closeNotes = () => {
 }
 
 const openNote = (note) => {
-  router.push({ path: '/notes', query: { note: note.id } })
-}
-
-const editNote = (note) => {
-  router.push({ path: '/notes', query: { edit: note.id } })
+  router.push({ path: `/note/${note.id}` })
 }
 
 // 监听路由查询参数变化
