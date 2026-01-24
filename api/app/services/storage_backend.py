@@ -427,7 +427,9 @@ class S3StorageBackend(StorageBackend):
                     else self.public_url
                 ),
                 region_name=self.region_name,
-                config=Config(signature_version="s3", s3={"addressing_style": "path"}),
+                config=Config(
+                    signature_version="s3v4", s3={"addressing_style": "path"}
+                ),
             )
             try:
                 params = {"Bucket": self.bucket_name, "Key": storage_path}
@@ -479,7 +481,7 @@ class S3StorageBackend(StorageBackend):
     def generate_presigned_upload_url(
         self,
         filename: str,
-        user_id: Optional[str] = None,
+        workspace_id: Optional[str] = None,
         content_type: Optional[str] = None,
     ) -> dict:
         """
@@ -487,14 +489,14 @@ class S3StorageBackend(StorageBackend):
 
         Args:
             filename: 文件名
-            user_id: 用户ID
+            workspace_id: Workspace ID
             content_type: 文件MIME类型
 
         Returns:
             包含上传URL和相关信息的字典
         """
         # 生成 S3 键
-        s3_key = self._generate_s3_key(filename, user_id)
+        s3_key = self._generate_s3_key(filename, workspace_id)
 
         try:
             # 构建上传参数
