@@ -248,13 +248,13 @@
 
             <div class="form-control">
               <label class="label"><span class="label-text">类型</span></label>
-              <select
-                v-model="form.backend_type"
-                class="select select-bordered w-full"
-                :disabled="isEditing"
-              >
+              <select v-model="form.backend_type" class="select select-bordered w-full">
+                <!-- :disabled="isEditing" -->
                 <option value="local">本地存储 (Local)</option>
-                <option value="s3">对象存储 (S3 Compatible)</option>
+                <option value="aws_s3">AWS S3 (S3 Compatible)</option>
+                <option value="aliyun_oss">阿里云 OSS (S3 Compatible)</option>
+                <option value="minio">MinIO (S3 Compatible)</option>
+                <option value="s3">S3 对象存储 (S3 Compatible)</option>
               </select>
             </div>
           </div>
@@ -288,7 +288,10 @@
           </div>
 
           <!-- S3 Config -->
-          <div v-if="form.backend_type === 's3'" class="bg-base-200 p-4 rounded-lg space-y-4">
+          <div
+            v-if="['aws_s3', 'aliyun_oss', 'minio', 's3'].includes(form.backend_type)"
+            class="bg-base-200 p-4 rounded-lg space-y-4"
+          >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="form-control">
                 <label class="label"><span class="label-text">Bucket Name</span></label>
@@ -323,7 +326,7 @@
               <div class="form-control">
                 <label class="label"><span class="label-text">Secret Key</span></label>
                 <input
-                  type="password"
+                  type="text"
                   v-model="form.config.secret_key"
                   class="input input-bordered w-full"
                   required

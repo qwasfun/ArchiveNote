@@ -25,6 +25,38 @@ from app.services.security import get_current_admin_user, get_current_user
 router = APIRouter(prefix="/api/v1/storage-backends", tags=["storage-backends"])
 
 
+def _is_s3_backend(backend_type: str) -> bool:
+    """判断是否为 S3 类型的存储后端"""
+    return backend_type in ["s3", "aliyun_oss", "minio", "aws_s3"]
+
+
+def _get_storage_backend_class(backend_type: str):
+    """根据后端类型获取对应的存储后端类"""
+    if backend_type == StorageBackendType.LOCAL.value:
+        from app.services.storage_backend import LocalStorageBackend
+
+        return LocalStorageBackend
+    elif backend_type == "aliyun_oss":
+        from app.services.storage_backend import AliyunOSSStorageBackend
+
+        return AliyunOSSStorageBackend
+    elif backend_type == "minio":
+        from app.services.storage_backend import MinIOStorageBackend
+
+        return MinIOStorageBackend
+    elif backend_type == "aws_s3":
+        from app.services.storage_backend import AWSS3StorageBackend
+
+        return AWSS3StorageBackend
+    elif backend_type == "s3":
+        # 向后兼容：默认使用通用 S3StorageBackend
+        from app.services.storage_backend import S3StorageBackend
+
+        return S3StorageBackend
+    else:
+        raise ValueError(f"不支持的存储类型: {backend_type}")
+
+
 def _config_to_dict(backend: StorageBackendConfig) -> dict:
     """将配置从JSON字符串转换为字典"""
     try:
@@ -91,7 +123,7 @@ async def create_storage_backend(
         is_default=backend_data.is_default,
         allow_client_direct_upload=(
             backend_data.allow_client_direct_upload
-            if backend_data.backend_type.value == "s3"
+            if _is_s3_backend(backend_data.backend_type.value)
             else False
         ),
         created_by=current_user.id,
@@ -202,7 +234,7 @@ async def update_storage_backend(
 
     if backend_data.allow_client_direct_upload is not None:
         # 只有S3类型的存储后端才能启用客户端直传
-        if backend.backend_type == "s3":
+        if _is_s3_backend(backend.backend_type):
             backend.allow_client_direct_upload = backend_data.allow_client_direct_upload
         elif backend_data.allow_client_direct_upload:
             raise HTTPException(
@@ -338,13 +370,29 @@ async def test_storage_backend(
                 os.makedirs(test_backend.base_dir, exist_ok=True)
             return {"status": "success", "message": "本地存储测试成功"}
 
-        elif backend.backend_type == StorageBackendType.S3.value:
-            from app.services.storage_backend import S3StorageBackend
+        elif _is_s3_backend(backend.backend_type):
+            # 使用对应的 S3 后端类
+            try:
+                from app.services.storage_backend import S3StorageBackend
 
-            test_backend = S3StorageBackend(**config)
-            # 尝试列出桶（测试连接）
-            test_backend.s3_client.head_bucket(Bucket=config["bucket_name"])
-            return {"status": "success", "message": "S3存储连接测试成功"}
+                BackendClass = _get_storage_backend_class(backend.backend_type)
+                test_backend = BackendClass(**config)
+                # 尝试列出桶（测试连接）
+                # S3StorageBackend 及其子类都有 s3_client 属性
+                if isinstance(test_backend, S3StorageBackend):
+                    test_backend.s3_client.head_bucket(Bucket=config["bucket_name"])
+
+                # 根据类型返回不同的消息
+                type_messages = {
+                    "aliyun_oss": "阿里云 OSS 连接测试成功",
+                    "minio": "MinIO 连接测试成功",
+                    "aws_s3": "AWS S3 连接测试成功",
+                    "s3": "S3 存储连接测试成功",
+                }
+                message = type_messages.get(backend.backend_type, "S3 存储连接测试成功")
+                return {"status": "success", "message": message}
+            except Exception as e:
+                raise Exception(f"S3 连接失败: {str(e)}")
 
         else:
             raise HTTPException(
@@ -463,7 +511,8 @@ async def import_storage_config(
                 config = backend_data["config"]
 
                 # 验证后端类型
-                if backend_type not in ["local", "s3"]:
+                valid_types = ["local", "s3", "aliyun_oss", "minio", "aws_s3"]
+                if backend_type not in valid_types:
                     stats["errors"].append(
                         f"配置 '{name}': 不支持的存储类型 '{backend_type}'"
                     )
@@ -483,7 +532,7 @@ async def import_storage_config(
                         # 只有S3类型才能启用直传
                         backend.allow_client_direct_upload = (
                             backend_data.get("allow_client_direct_upload", False)
-                            if backend_type == "s3"
+                            if _is_s3_backend(backend_type)
                             else False
                         )
                         backend.updated_at = datetime.utcnow()
@@ -505,7 +554,7 @@ async def import_storage_config(
                         # 只有S3类型才能启用直传
                         allow_client_direct_upload=(
                             backend_data.get("allow_client_direct_upload", False)
-                            if backend_type == "s3"
+                            if _is_s3_backend(backend_type)
                             else False
                         ),
                         created_by=current_user.id,
