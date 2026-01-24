@@ -8,11 +8,12 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import BinaryIO, Tuple
+from typing import BinaryIO, Optional, Tuple
 from urllib.parse import quote
 
 import boto3
 import shortuuid
+from boto3.session import Config
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
 
@@ -23,7 +24,9 @@ class StorageBackend(ABC):
     """存储后端抽象基类"""
 
     @abstractmethod
-    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
+    def save(
+        self, file: UploadFile, workspace_id: Optional[str] = None
+    ) -> Tuple[str, int, dict]:
         """
         保存文件
 
@@ -69,7 +72,10 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def get_download_info(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
     ) -> dict:
         """
         获取文件下载信息
@@ -83,8 +89,11 @@ class StorageBackend(ABC):
         pass
 
     def get_public_url(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
-    ):
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
+    ) -> Optional[str]:
         pass
 
 
@@ -99,7 +108,9 @@ class LocalStorageBackend(StorageBackend):
         """将本地文件路径转换为URL友好的格式（使用/作为分隔符）"""
         return filepath.replace("\\", "/")
 
-    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
+    def save(
+        self, file: UploadFile, workspace_id: Optional[str] = None
+    ) -> Tuple[str, int, dict]:
         """保存文件到本地磁盘"""
         # 生成日期和时间
         now = datetime.now()
@@ -113,7 +124,7 @@ class LocalStorageBackend(StorageBackend):
         os.makedirs(target_dir, exist_ok=True)
 
         # 使用 UUID 生成文件名
-        file_ext = os.path.splitext(file.filename)[1]
+        file_ext = os.path.splitext(file.filename or "")[1]
         new_filename = f"{shortuuid.uuid()}{file_ext}"
         filepath = os.path.join(target_dir, new_filename)
 
@@ -131,9 +142,9 @@ class LocalStorageBackend(StorageBackend):
 
         # 检测文件类型
         file_type_info = FileTypeDetector.detect(
-            filename=file.filename,
+            filename=file.filename or "",
             file_content=file_content,
-            mime_hint=file.content_type,
+            mime_hint=file.content_type or "",
         )
 
         return storage_path, size, file_type_info
@@ -154,14 +165,20 @@ class LocalStorageBackend(StorageBackend):
         return os.path.exists(storage_path)
 
     def get_download_info(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
     ) -> dict:
         """获取本地文件下载信息"""
         return {"type": "local", "path": storage_path}
 
     def get_public_url(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
-    ) -> str:
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
+    ) -> Optional[str]:
         """
         本地存储不支持公共 URL，返回 None
         """
@@ -169,16 +186,17 @@ class LocalStorageBackend(StorageBackend):
 
 
 class S3StorageBackend(StorageBackend):
-    """S3 兼容存储后端（支持 AWS S3, MinIO, 阿里云 OSS 等）"""
+    """S3 兼容存储后端基类"""
 
     def __init__(
         self,
         bucket_name: str,
         access_key: str,
         secret_key: str,
-        endpoint_url: str = None,
+        endpoint_url: Optional[str] = None,
         region_name: str = "us-east-1",
-        public_url: str = None,
+        public_url: Optional[str] = None,
+        config: Optional[Config] = None,
     ):
         """
         初始化 S3 存储后端
@@ -190,18 +208,16 @@ class S3StorageBackend(StorageBackend):
             endpoint_url: S3 端点 URL（用于 MinIO 等兼容服务）
             region_name: 区域名称
             public_url: 公共访问 URL（可选，用于直接下载）
+            config: boto3 配置对象（可选，用于定制签名和其他行为）
         """
         self.bucket_name = bucket_name
         self.public_url = public_url
         self.endpoint_url = endpoint_url
         self.region_name = region_name
 
-        # 创建 S3 配置
-        # 禁用分块传输以兼容更多 S3 服务（如阿里云 OSS）
-        # https://help.aliyun.com/zh/oss/developer-reference/use-aws-sdks-to-access-oss
-        config = boto3.session.Config(
-            signature_version="s3", s3={"addressing_style": "virtual"}
-        )
+        # 如果没有提供配置，使用默认配置
+        if config is None:
+            config = self._get_default_config()
 
         # 创建 S3 客户端
         self.s3_client = boto3.client(
@@ -215,6 +231,13 @@ class S3StorageBackend(StorageBackend):
 
         # 确保桶存在
         self._ensure_bucket_exists()
+
+    def _get_default_config(self) -> Config:
+        """
+        获取默认的 boto3 配置
+        子类可以重写此方法以提供定制配置
+        """
+        return Config(signature_version="s3v4", s3={"addressing_style": "auto"})
 
     def _ensure_bucket_exists(self):
         """确保 S3 桶存在，不存在则创建"""
@@ -265,7 +288,9 @@ class S3StorageBackend(StorageBackend):
                 # 其他错误，如权限问题等
                 print(f"检查 S3 桶时出错: {e}")
 
-    def _generate_s3_key(self, filename: str, workspace_id: str = None) -> str:
+    def _generate_s3_key(
+        self, filename: str, workspace_id: Optional[str] = None
+    ) -> str:
         """
         生成 S3 对象键
         格式：workspace_id/日期/uuid.ext
@@ -287,10 +312,12 @@ class S3StorageBackend(StorageBackend):
             return f"{workspace_id}/{date_str}/{new_filename}"
         return f"anonymous/{date_str}/{new_filename}"
 
-    def save(self, file: UploadFile, workspace_id: str = None) -> Tuple[str, int, dict]:
+    def save(
+        self, file: UploadFile, workspace_id: Optional[str] = None
+    ) -> Tuple[str, int, dict]:
         """保存文件到 S3"""
         # 生成 S3 键
-        s3_key = self._generate_s3_key(file.filename, workspace_id)
+        s3_key = self._generate_s3_key(file.filename or "", workspace_id)
 
         # 读取文件内容
         file_content = file.file.read()
@@ -301,9 +328,9 @@ class S3StorageBackend(StorageBackend):
             file_content[:8192] if len(file_content) > 8192 else file_content
         )
         file_type_info = FileTypeDetector.detect(
-            filename=file.filename,
+            filename=file.filename or "",
             file_content=detection_content,
-            mime_hint=file.content_type,
+            mime_hint=file.content_type or "",
         )
 
         # 上传到 S3
@@ -341,7 +368,10 @@ class S3StorageBackend(StorageBackend):
             return False
 
     def get_download_info(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
     ) -> dict:
         """获取 S3 文件下载信息"""
         # 生成预签名 URL（有效期 1 小时）
@@ -367,8 +397,11 @@ class S3StorageBackend(StorageBackend):
             raise Exception(f"生成预签名 URL 失败: {e}")
 
     def get_public_url(
-        self, storage_path: str, filename: str = None, disposition: str = "attachment"
-    ) -> str:
+        self,
+        storage_path: str,
+        filename: Optional[str] = None,
+        disposition: str = "attachment",
+    ) -> Optional[str]:
         """
         生成签名后的公共 URL
 
@@ -394,8 +427,8 @@ class S3StorageBackend(StorageBackend):
                     else self.public_url
                 ),
                 region_name=self.region_name,
-                config=boto3.session.Config(
-                    signature_version="s3", s3={"addressing_style": "path"}
+                config=Config(
+                    signature_version="s3v4", s3={"addressing_style": "path"}
                 ),
             )
             try:
@@ -446,21 +479,24 @@ class S3StorageBackend(StorageBackend):
             raise Exception(f"从 S3 获取文件失败: {e}")
 
     def generate_presigned_upload_url(
-        self, filename: str, user_id: str = None, content_type: str = None
+        self,
+        filename: str,
+        workspace_id: Optional[str] = None,
+        content_type: Optional[str] = None,
     ) -> dict:
         """
         生成预签名上传 URL，用于客户端直传
 
         Args:
             filename: 文件名
-            user_id: 用户ID
+            workspace_id: Workspace ID
             content_type: 文件MIME类型
 
         Returns:
             包含上传URL和相关信息的字典
         """
         # 生成 S3 键
-        s3_key = self._generate_s3_key(filename, user_id)
+        s3_key = self._generate_s3_key(filename, workspace_id)
 
         try:
             # 构建上传参数
@@ -495,3 +531,61 @@ class S3StorageBackend(StorageBackend):
             }
         except Exception as e:
             raise Exception(f"生成预签名上传 URL 失败: {e}")
+
+
+class AliyunOSSStorageBackend(S3StorageBackend):
+    """
+    阿里云 OSS 存储后端
+    使用 S3 兼容 API 和 V2 签名（signature_version='s3'）
+    """
+
+    def _get_default_config(self) -> Config:
+        """
+        阿里云 OSS 专用配置：
+        - 使用 V2 签名（signature_version='s3'）
+        - 使用虚拟主机样式寻址
+        - 禁用分块传输编码（阿里云 OSS 不支持）
+
+        参考文档：
+        https://help.aliyun.com/zh/oss/developer-reference/use-aws-sdks-to-access-oss
+        """
+        return Config(
+            signature_version="s3",  # V2 签名
+            s3={"addressing_style": "virtual"},  # 虚拟主机样式
+        )
+
+
+class MinIOStorageBackend(S3StorageBackend):
+    """
+    MinIO 存储后端
+    MinIO 完全兼容 AWS S3 API
+    """
+
+    def _get_default_config(self) -> Config:
+        """
+        MinIO 配置：
+        - 使用 V4 签名
+        - 使用路径样式寻址（path style）
+        """
+        return Config(
+            signature_version="s3v4",  # V4 签名
+            s3={"addressing_style": "path"},  # 路径样式
+        )
+
+
+class AWSS3StorageBackend(S3StorageBackend):
+    """
+    AWS S3 存储后端
+    使用 AWS S3 原生配置
+    """
+
+    def _get_default_config(self) -> Config:
+        """
+        AWS S3 配置：
+        - 使用 V4 签名
+        - 使用自动寻址样式（让 boto3 自动选择）
+        """
+        return Config(
+            signature_version="s3v4",  # V4 签名
+            s3={"addressing_style": "auto"},  # 自动选择寻址样式
+        )

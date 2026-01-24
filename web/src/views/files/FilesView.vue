@@ -343,7 +343,8 @@ const loadDefaultBackend = async () => {
     defaultBackend.value = backend
     // 只有S3类型且启用了客户端直传才支持直传模式
     supportsDirectUpload.value =
-      backend.backend_type === 's3' && backend.allow_client_direct_upload === true
+      ['aws_s3', 'aliyun_oss', 'minio', 's3'].includes(backend.backend_type) &&
+      backend.allow_client_direct_upload === true
 
     // 如果不支持直传,强制使用普通模式
     if (!supportsDirectUpload.value) {

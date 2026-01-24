@@ -157,7 +157,10 @@ class UserResponse(BaseModel):
 
 class StorageBackendType(str, Enum):
     LOCAL = "local"
-    S3 = "s3"
+    S3 = "s3"  # 通用 S3（保留以保持向后兼容）
+    ALIYUN_OSS = "aliyun_oss"  # 阿里云 OSS
+    MINIO = "minio"  # MinIO
+    AWS_S3 = "aws_s3"  # AWS S3
 
 
 class LocalStorageConfig(BaseModel):
@@ -185,7 +188,7 @@ class StorageBackendCreate(BaseModel):
     config: LocalStorageConfig | S3StorageConfig
     description: str | None = None
     is_default: bool = False
-    allow_client_direct_upload: bool = False  # 是否允许客户端直传（仅S3）
+    allow_client_direct_upload: bool = False  # 是否允许客户端直传（仅S3类型）
 
 
 class StorageBackendUpdate(BaseModel):

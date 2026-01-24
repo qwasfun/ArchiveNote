@@ -132,13 +132,16 @@ async def get_presigned_upload_url(
     result = await db.execute(stmt)
     backend_config = result.scalar_one_or_none()
 
+    # 获取用户默认 workspace
+    workspace_id = await get_user_default_workspace(current_user, db)
+
     if not backend_config or not backend_config.allow_client_direct_upload:
         raise HTTPException(status_code=400, detail="当前存储后端未启用客户端直传功能")
 
     try:
         # 生成预签名URL
         presigned_data = backend.generate_presigned_upload_url(
-            filename=filename, user_id=str(current_user.id), content_type=content_type
+            filename=filename, workspace_id=workspace_id, content_type=content_type
         )
 
         # 返回预签名信息

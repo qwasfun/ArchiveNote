@@ -11,7 +11,31 @@ from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .storage_backend import LocalStorageBackend, S3StorageBackend, StorageBackend
+from .storage_backend import (
+    AliyunOSSStorageBackend,
+    AWSS3StorageBackend,
+    LocalStorageBackend,
+    MinIOStorageBackend,
+    S3StorageBackend,
+    StorageBackend,
+)
+
+
+def _get_storage_backend_class(backend_type: str):
+    """根据后端类型获取对应的存储后端类"""
+    if backend_type == "local":
+        return LocalStorageBackend
+    elif backend_type == "aliyun_oss":
+        return AliyunOSSStorageBackend
+    elif backend_type == "minio":
+        return MinIOStorageBackend
+    elif backend_type == "aws_s3":
+        return AWSS3StorageBackend
+    elif backend_type == "s3":
+        # 向后兼容：默认使用通用 S3StorageBackend
+        return S3StorageBackend
+    else:
+        raise ValueError(f"不支持的存储类型: {backend_type}")
 
 
 def _get_default_local_storage() -> StorageBackend:
@@ -45,10 +69,11 @@ async def get_storage_backend_by_id(
         if backend_config:
             config = json.loads(backend_config.config_json)
 
-            if backend_config.backend_type == "s3":
-                return S3StorageBackend(**config)
-            elif backend_config.backend_type == "local":
-                return LocalStorageBackend(**config)
+            try:
+                BackendClass = _get_storage_backend_class(backend_config.backend_type)
+                return BackendClass(**config)
+            except Exception as e:
+                print(f"创建存储后端实例失败: {e}")
     except Exception as e:
         print(f"从数据库加载存储后端配置失败: {e}")
 
@@ -79,10 +104,11 @@ async def get_default_storage_backend(
             config = json.loads(backend_config.config_json)
             backend = None
 
-            if backend_config.backend_type == "s3":
-                backend = S3StorageBackend(**config)
-            elif backend_config.backend_type == "local":
-                backend = LocalStorageBackend(**config)
+            try:
+                BackendClass = _get_storage_backend_class(backend_config.backend_type)
+                backend = BackendClass(**config)
+            except Exception as e:
+                print(f"创建存储后端实例失败: {e}")
 
             if backend:
                 return backend, str(backend_config.id)
