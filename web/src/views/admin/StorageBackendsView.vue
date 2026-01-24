@@ -639,8 +639,11 @@ const handleSubmit = async () => {
       name: form.name,
       backend_type: form.backend_type,
       description: form.description,
-      allow_client_direct_upload:
-        form.backend_type === 's3' ? form.allow_client_direct_upload : false,
+      allow_client_direct_upload: ['aws_s3', 'aliyun_oss', 'minio', 's3'].includes(
+        form.backend_type,
+      )
+        ? form.allow_client_direct_upload
+        : false,
       config: { ...form.config },
     }
 
