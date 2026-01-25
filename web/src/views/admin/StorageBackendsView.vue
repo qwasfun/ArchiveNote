@@ -131,7 +131,7 @@
                 class="badge badge-lg"
                 :class="backend.backend_type === 'local' ? 'badge-neutral' : 'badge-accent'"
               >
-                {{ backend.backend_type === 'local' ? '本地存储' : 'S3 存储' }}
+                {{ BACKEND_TYPES.find((item) => backend.backend_type === item.value)?.label }}
               </div>
               <div v-if="backend.is_default" class="badge badge-primary badge-lg gap-1">
                 <svg
@@ -198,6 +198,9 @@
               <div v-if="backend.config.endpoint_url">
                 <span class="font-semibold">Endpoint:</span> {{ backend.config.endpoint_url }}
               </div>
+              <div v-if="backend.config.public_url">
+                <span class="font-semibold">Endpoint:</span> {{ backend.config.public_url }}
+              </div>
               <div class="mt-2">
                 <span class="font-semibold">客户端直传:</span>
                 <span
@@ -249,12 +252,13 @@
             <div class="form-control">
               <label class="label"><span class="label-text">类型</span></label>
               <select v-model="form.backend_type" class="select select-bordered w-full">
-                <!-- :disabled="isEditing" -->
-                <option value="local">本地存储 (Local)</option>
-                <option value="aws_s3">AWS S3 (S3 Compatible)</option>
-                <option value="aliyun_oss">阿里云 OSS (S3 Compatible)</option>
-                <option value="minio">MinIO (S3 Compatible)</option>
-                <option value="s3">S3 对象存储 (S3 Compatible)</option>
+                <option
+                  v-for="backend_type in BACKEND_TYPES"
+                  :value="backend_type.value"
+                  :key="backend_type.value"
+                >
+                  {{ backend_type.label }}
+                </option>
               </select>
             </div>
           </div>
@@ -289,7 +293,7 @@
 
           <!-- S3 Config -->
           <div
-            v-if="['aws_s3', 'aliyun_oss', 'minio', 's3'].includes(form.backend_type)"
+            v-if="S3_BACKEND_TYPES.includes(form.backend_type)"
             class="bg-base-200 p-4 rounded-lg space-y-4"
           >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -521,6 +525,31 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import storageBackendService from '@/api/storageBackendService'
 import { useToast } from '@/composables/useToast'
 
+const BACKEND_TYPES = [
+  {
+    label: '本地存储',
+    value: 'local',
+  },
+  {
+    label: 'AWS',
+    value: 'aws_s3',
+  },
+  {
+    label: '阿里云 OSS',
+    value: 'aliyun_oss',
+  },
+  {
+    label: 'MinIO',
+    value: 'minio',
+  },
+  {
+    label: 'S3 对象存储',
+    value: 's3',
+  },
+]
+
+const S3_BACKEND_TYPES = ['aws_s3', 'aliyun_oss', 'minio', 's3']
+
 const backends = ref([])
 const loading = ref(true)
 const submitting = ref(false)
@@ -639,9 +668,7 @@ const handleSubmit = async () => {
       name: form.name,
       backend_type: form.backend_type,
       description: form.description,
-      allow_client_direct_upload: ['aws_s3', 'aliyun_oss', 'minio', 's3'].includes(
-        form.backend_type,
-      )
+      allow_client_direct_upload: S3_BACKEND_TYPES.includes(form.backend_type)
         ? form.allow_client_direct_upload
         : false,
       config: { ...form.config },
