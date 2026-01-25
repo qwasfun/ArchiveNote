@@ -195,6 +195,7 @@ class StorageBackendUpdate(BaseModel):
     """更新存储后端"""
 
     name: str | None = None
+    backend_type: StorageBackendType
     config: LocalStorageConfig | S3StorageConfig | None = None
     description: str | None = None
     is_active: bool | None = None

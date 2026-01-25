@@ -223,6 +223,9 @@ async def update_storage_backend(
             )
         backend.name = backend_data.name
 
+    if backend_data.backend_type is not None:
+        backend.backend_type = backend_data.backend_type.value
+
     if backend_data.config is not None:
         backend.config_json = backend_data.config.model_dump_json()
 
