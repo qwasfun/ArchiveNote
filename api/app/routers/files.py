@@ -536,30 +536,28 @@ async def download_file(
     if not file_exists(storage_path, backend=backend):
         raise HTTPException(status_code=404, detail="文件在存储中不存在")
 
-    if isinstance(backend, S3StorageBackend):
-        # S3 存储：重定向到预签名 URL
-        try:
-            url = backend.get_public_url(
-                storage_path, filename=file_record.filename, disposition="attachment"
-            )
-            return RedirectResponse(url=url)
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"获取 S3 下载链接失败: {str(e)}"
-            )
-    else:
-        # 本地存储：使用 FileResponse
-        # 对文件名进行URL编码以支持中文等非ASCII字符
-        encoded_filename = quote(file_record.filename)
-
-        return FileResponse(
-            path=storage_path,
-            filename=file_record.filename,
-            media_type=file_record.mime_type,
-            headers={
-                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
-            },
+    # 尝试获取公共链接（适用于S3等远程存储）
+    try:
+        url = backend.get_public_url(
+            storage_path, filename=file_record.filename, disposition="attachment"
         )
+        if url:
+            return RedirectResponse(url=url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取下载链接失败: {str(e)}")
+
+    # 本地存储：使用 FileResponse
+    # 对文件名进行URL编码以支持中文等非ASCII字符
+    encoded_filename = quote(file_record.filename)
+
+    return FileResponse(
+        path=storage_path,
+        filename=file_record.filename,
+        media_type=file_record.mime_type,
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+        },
+    )
 
 
 @router.get("/preview/{file_id}/{filename}")
@@ -588,30 +586,26 @@ async def preview_file(
     if not file_exists(storage_path, backend=backend):
         raise HTTPException(status_code=404, detail="文件在存储中不存在")
 
-    if isinstance(backend, S3StorageBackend):
-        # S3 存储：重定向到预签名 URL
-        try:
-            url = backend.get_public_url(
-                storage_path, filename=file_record.filename, disposition="inline"
-            )
-            return RedirectResponse(url=url)
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"获取 S3 预览链接失败: {str(e)}"
-            )
-    else:
-        # 本地存储：使用 FileResponse
-        # 对文件名进行URL编码以支持中文等非ASCII字符
-        encoded_filename = quote(file_record.filename)
-
-        return FileResponse(
-            path=storage_path,
-            filename=file_record.filename,
-            media_type=file_record.mime_type,
-            headers={
-                "Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"
-            },
+    # 尝试获取公共链接（适用于S3等远程存储）
+    try:
+        url = backend.get_public_url(
+            storage_path, filename=file_record.filename, disposition="inline"
         )
+        if url:
+            return RedirectResponse(url=url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取预览链接失败: {str(e)}")
+
+    # 本地存储：使用 FileResponse
+    # 对文件名进行URL编码以支持中文等非ASCII字符
+    encoded_filename = quote(file_record.filename)
+
+    return FileResponse(
+        path=storage_path,
+        filename=file_record.filename,
+        media_type=file_record.mime_type,
+        headers={"Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}"},
+    )
 
 
 @router.delete("/{file_id}")

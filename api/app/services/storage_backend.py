@@ -417,6 +417,19 @@ class S3StorageBackend(StorageBackend):
         if self.public_url:
             # 使用自定义端点创建临时客户端
             # 使用 path 样式访问，避免在域名前添加 bucket_name
+
+            # 获取签名版本，优先使用当前实例配置的签名版本
+            signature_version = "s3v4"
+            try:
+                # 尝试从默认配置获取
+                default_config = self._get_default_config()
+                # 使用 getattr 避免静态检查错误
+                sig_ver = getattr(default_config, "signature_version", None)
+                if sig_ver:
+                    signature_version = sig_ver
+            except Exception:
+                pass
+
             public_client = boto3.client(
                 "s3",
                 aws_access_key_id=self.s3_client._request_signer._credentials.access_key,
@@ -428,7 +441,7 @@ class S3StorageBackend(StorageBackend):
                 ),
                 region_name=self.region_name,
                 config=Config(
-                    signature_version="s3v4", s3={"addressing_style": "path"}
+                    signature_version=signature_version, s3={"addressing_style": "path"}
                 ),
             )
             try:
