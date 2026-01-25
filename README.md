@@ -1,19 +1,10 @@
+![ArchiveNote Screenshot](./docs/assets/home.png)
+
 # ArchiveNote
 
-文件与笔记结合的管理系统，支持文件管理、文件夹管理、笔记管理以及多存储后端。
+一款支持文件、笔记双向关联的轻量级管理系统
 
-## ✨ 功能特性
-
-- 📁 **文件管理** - 完整的文件上传、下载、预览和删除功能
-- 📂 **文件夹系统** - 支持多级文件夹嵌套和层级管理
-- 📝 **笔记功能** - Markdown 编辑器，支持文件和文件夹关联
-- 🗑️ **回收站** - 文件和文件夹软删除，支持恢复
-- 🔐 **用户认证** - JWT 认证，支持管理员和普通用户角色
-- 📊 **统计功能** - 文件和存储统计信息
-- 💾 **多存储后端** - 支持本地存储和 S3 兼容对象存储
-- 🎨 **现代化界面** - 基于 Vue 3 和 Tailwind CSS 的响应式设计
-- 📱 **PWA 支持** - 可作为渐进式 Web 应用安装
-- 🔍 **文件预览** - 支持图片、PDF、文本等多种文件类型预览
+[在线演示](https://demo.archivenote.org/)
 
 ## 🚀 部署
 
@@ -22,7 +13,8 @@
 ```bash
 # 构建并启动容器
 docker pull ghcr.io/qwasfun/archivenote:latest
-docker run -d -p 2601:2601 -v $(pwd)/data:/app/data -e SECRET_KEY=your-production-secret-key  archivenote
+
+docker run -d -p 2601:2601 -v $(pwd)/data:/app/data -e SECRET_KEY=your-production-secret-key  ghcr.io/qwasfun/archivenote:latest
 ```
 
 访问 http://localhost:2601
@@ -54,7 +46,7 @@ docker-compose up -d
 
 ## 🔐 账户
 
-第一位注册用户自动成为管理员，其他注册用户为普通用户
+第一位注册用户自动成为系统管理员，其他注册用户为普通用户
 
 ## 💻 本地开发
 
@@ -71,7 +63,7 @@ docker-compose up -d
 ```env
 # 数据库配置
 DATABASE_URL=sqlite+aiosqlite:///./data/app.db
-# DATABASE_URL=postgresql+asyncpg://user:password@localhost/dbname
+# DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
 
 # JWT 配置
 SECRET_KEY=your-secret-key-here
