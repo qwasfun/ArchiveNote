@@ -701,6 +701,7 @@ onMounted(async () => {
         </div>
 
         <DragUploadZone
+          :showSelected="false"
           v-else
           :folder-id="currentFolderId"
           :upload-mode="uploadMode"
