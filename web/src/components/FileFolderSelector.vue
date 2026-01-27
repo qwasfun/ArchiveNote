@@ -218,6 +218,7 @@ onMounted(() => {
 
     <!-- 内容区域 -->
     <DragUploadZone
+      :showSelected="true"
       :folder-id="currentFolderId"
       :upload-mode="uploadMode"
       @upload-complete="handleDragUploadComplete"

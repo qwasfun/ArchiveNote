@@ -12,6 +12,10 @@ const props = defineProps({
     default: 'traditional',
     validator: (value) => ['traditional', 'direct'].includes(value),
   },
+  showSelected: {
+    type: Boolean,
+    default: false,
+  },
   disabled: {
     type: Boolean,
     default: false,
@@ -282,7 +286,7 @@ defineExpose({
 
     <!-- 上传按钮浮动层（仅在非拖拽和非上传状态显示） -->
     <div
-      v-if="!isDragging && !uploading && !disabled"
+      v-if="!isDragging && !uploading && !disabled && showSelected"
       class="absolute top-4 right-4 z-40 flex gap-2"
     >
       <button
@@ -298,7 +302,7 @@ defineExpose({
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           ></path>
         </svg>
-        选择文件
+        上传文件
       </button>
       <button
         @click.stop="triggerFolderInput"
@@ -313,7 +317,7 @@ defineExpose({
             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
           ></path>
         </svg>
-        选择文件夹
+        上传文件夹
       </button>
     </div>
 
