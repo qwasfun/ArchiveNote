@@ -39,14 +39,6 @@ def upgrade() -> None:
         "notes", "workspace_id", existing_type=sa.VARCHAR(length=36), nullable=False
     )
 
-    # 将 storage_backends 表的 workspace_id 设置为必填字段
-    op.alter_column(
-        "storage_backends",
-        "workspace_id",
-        existing_type=sa.VARCHAR(length=36),
-        nullable=False,
-    )
-
     # 将 workspace_user_association 表的 created_at 改为可选字段
     op.alter_column(
         "workspace_user_association",
@@ -86,14 +78,6 @@ def downgrade() -> None:
         "created_at",
         existing_type=postgresql.TIMESTAMP(),
         nullable=False,
-    )
-
-    # 恢复 storage_backends 表的 workspace_id 为可选字段
-    op.alter_column(
-        "storage_backends",
-        "workspace_id",
-        existing_type=sa.VARCHAR(length=36),
-        nullable=True,
     )
 
     # 恢复 notes 表的 workspace_id 为可选字段
