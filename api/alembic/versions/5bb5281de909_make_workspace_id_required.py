@@ -9,7 +9,6 @@ Create Date: 2026-01-31 11:20:54.887765
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -43,7 +42,7 @@ def upgrade() -> None:
     op.alter_column(
         "workspace_user_association",
         "created_at",
-        existing_type=postgresql.TIMESTAMP(),
+        existing_type=sa.DateTime(),
         nullable=True,
     )
 
@@ -76,7 +75,7 @@ def downgrade() -> None:
     op.alter_column(
         "workspace_user_association",
         "created_at",
-        existing_type=postgresql.TIMESTAMP(),
+        existing_type=sa.DateTime(),
         nullable=False,
     )
 
