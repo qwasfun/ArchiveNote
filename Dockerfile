@@ -20,7 +20,6 @@ COPY api/ ./
 
 ENV PATH="/api/.venv/bin:$PATH"
 
-# 拷贝数据目录（确保 sqlite 文件目录存在）  在容器中的数据保存目录为 /api/data
 # 安装后端依赖
 RUN mkdir -p data && pip install uv && uv sync
 
