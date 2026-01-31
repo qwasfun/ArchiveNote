@@ -422,10 +422,10 @@ onMounted(async () => {
 
 <template>
   <div class="bg-gray-50 dark:bg-gray-900">
-    <div class="container mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-4">
       <!-- 头部区域 -->
-      <div class="mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="mb-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">📁 文件管理</h1>
             <p class="text-gray-600 dark:text-gray-400 mt-1">
@@ -522,7 +522,7 @@ onMounted(async () => {
       </div>
 
       <!-- Breadcrumbs -->
-      <div class="text-sm breadcrumbs mb-4">
+      <div class="text-sm breadcrumbs mb-3">
         <ul>
           <li v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
             <a
@@ -601,12 +601,14 @@ onMounted(async () => {
       </div>
 
       <!-- 上传区域 -->
-      <div v-if="showUploadModal" class="mb-8">
+      <div v-if="showUploadModal" class="mb-4">
         <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700"
         >
           <div class="flex justify-between items-start">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">📤 上传文件</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              📤 上传文件
+            </h2>
 
             <button
               v-if="supportsDirectUpload"
@@ -637,11 +639,11 @@ onMounted(async () => {
       </div>
 
       <!-- 搜索和过滤 -->
-      <div class="mb-6">
+      <div class="mb-4">
         <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700"
         >
-          <div class="flex flex-col lg:flex-row gap-4">
+          <div class="flex flex-col lg:flex-row gap-3">
             <!-- 搜索框 -->
             <div class="flex-1">
               <div class="relative">
@@ -685,7 +687,7 @@ onMounted(async () => {
 
           <!-- 统计信息 -->
           <div
-            class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+            class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700"
           >
             <span class="text-sm text-gray-500">
               显示 {{ files.length }} / {{ totalFiles }} 个文件
@@ -724,7 +726,7 @@ onMounted(async () => {
 
         <div
           v-else-if="files.length === 0 && folders.length === 0"
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 text-center border border-gray-200 dark:border-gray-700"
         >
           <div class="text-6xl mb-4">🔍</div>
 
@@ -742,7 +744,7 @@ onMounted(async () => {
           @upload-complete="handleDragUploadComplete"
         >
           <div
-            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700"
           >
             <FileGrid
               :files="files"
@@ -761,7 +763,7 @@ onMounted(async () => {
               @rename-file="handleRenameFile"
             />
             <!-- Pagination -->
-            <div v-if="totalPages > 1" class="flex justify-center mt-6">
+            <div v-if="totalPages > 1" class="flex justify-center mt-4">
               <div class="join">
                 <button
                   class="join-item btn"

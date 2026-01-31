@@ -97,21 +97,23 @@ const hoveredFolder = ref(null)
     <!-- 网格视图 -->
     <div v-if="viewMode === 'grid'">
       <!-- Folders Section -->
-      <div v-if="folders.length > 0" class="mb-8">
-        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-          <span class="mr-2">📁</span> Folders ({{ folders.length }})
+      <div v-if="folders.length > 0" class="mb-4">
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3 flex items-center">
+          <span class="mr-1.5">📁</span> Folders ({{ folders.length }})
         </h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3"
+        >
           <div
             v-for="folder in folders"
             :key="folder.id"
-            class="relative group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
+            class="relative group bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 dark:border-gray-700"
             @click="$emit('open-folder', folder)"
             @mouseenter="hoveredFolder = folder.id"
             @mouseleave="hoveredFolder = null"
           >
-            <div v-if="selectionMode" class="absolute top-2 left-2 z-10">
+            <div v-if="selectionMode" class="absolute top-1.5 left-1.5 z-10">
               <input
                 type="checkbox"
                 :checked="localSelectedFolders.includes(folder.id)"
@@ -120,13 +122,13 @@ const hoveredFolder = ref(null)
               />
             </div>
             <div
-              class="relative h-48 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"
+              class="relative h-32 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-200"
               @click.stop="$emit('open-folder', folder)"
             >
               <!-- 文件夹图标 -->
-              <div class="flex flex-col items-center justify-center p-4">
+              <div class="flex flex-col items-center justify-center p-2">
                 <div
-                  class="w-16 h-16 rounded-full flex items-center justify-center text-yellow-400 text-5xl"
+                  class="w-12 h-12 rounded-full flex items-center justify-center text-yellow-400 text-4xl"
                 >
                   📁
                 </div>
@@ -134,16 +136,16 @@ const hoveredFolder = ref(null)
             </div>
 
             <!-- 文件信息 -->
-            <div class="p-4 space-y-3">
+            <div class="p-2.5 space-y-2">
               <div class="flex items-center justify-between">
                 <h3
-                  class="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 flex-1 mr-2"
+                  class="font-medium text-gray-900 dark:text-gray-100 text-xs leading-tight line-clamp-2 flex-1 mr-1"
                   :title="folder.name"
                 >
                   {{ folder.name }}
                 </h3>
                 <button
-                  class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
+                  class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500 min-h-0 h-6 px-1"
                   :class="{ 'text-blue-500': folder.notes_count > 0 }"
                   :title="`管理笔记 (${folder.notes_count || 0})`"
                   @click.stop="$emit('manage-notes', folder, 'folder')"
@@ -156,12 +158,11 @@ const hoveredFolder = ref(null)
               </div>
               <!-- 操作按钮 -->
               <div
-                class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700"
+                class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 gap-1 pt-1.5 border-t border-gray-100 dark:border-gray-700"
               >
                 <div class="flex-1">
                   <button
-                    class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                    title="重命名"
+                    class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-6 px-1"
                     @click.stop="$emit('edit-folder', folder)"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +175,7 @@ const hoveredFolder = ref(null)
                     </svg>
                   </button>
                   <button
-                    class="btn btn-xs btn-ghost text-red-500 hover:text-red-600"
+                    class="btn btn-xs btn-ghost text-red-500 hover:text-red-600 min-h-0 h-6 px-1"
                     @click.stop="$emit('delete-folder', folder)"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,18 +197,20 @@ const hoveredFolder = ref(null)
 
       <!-- Files Section -->
       <div v-if="files.length > 0">
-        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-          <span class="mr-2">📄</span> Files ({{ files.length }})
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3 flex items-center">
+          <span class="mr-1.5">📄</span> Files ({{ files.length }})
         </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3"
+        >
           <div
             v-for="file in files"
             :key="file.id"
-            class="relative group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
+            class="relative group bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 dark:border-gray-700"
             @mouseenter="hoveredFile = file.id"
             @mouseleave="hoveredFile = null"
           >
-            <div v-if="selectionMode" class="absolute top-2 left-2 z-10">
+            <div v-if="selectionMode" class="absolute top-1.5 left-1.5 z-10">
               <input
                 type="checkbox"
                 :checked="localSelectedFiles.includes(file.id)"
@@ -217,7 +220,7 @@ const hoveredFolder = ref(null)
             </div>
             <!-- 文件预览区域 -->
             <div
-              class="relative h-48 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"
+              class="relative h-32 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-200"
               @click="$emit('view-details', file)"
             >
               <!-- 图片预览 -->
@@ -228,14 +231,14 @@ const hoveredFolder = ref(null)
                 class="w-full h-full object-cover"
               />
               <!-- 文件类型图标 -->
-              <div v-else class="flex flex-col items-center justify-center p-4">
+              <div v-else class="flex flex-col items-center justify-center p-2">
                 <div
-                  :class="`w-24 h-24 rounded-full flex items-center justify-center text-5xl ${getFileTypeColor(file.mime_type)}`"
+                  :class="`w-16 h-16 rounded-full flex items-center justify-center text-4xl ${getFileTypeColor(file.mime_type)}`"
                 >
                   {{ getFileIcon(file.mime_type) }}
                 </div>
                 <span
-                  class="mt-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
                   >{{ file.mime_type.split('/')[1] }}</span
                 >
               </div>
@@ -271,16 +274,16 @@ const hoveredFolder = ref(null)
             </div>
 
             <!-- 文件信息 -->
-            <div class="p-4 space-y-3">
+            <div class="p-2.5 space-y-1.5">
               <div class="flex items-center justify-between">
                 <h3
-                  class="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 flex-1 mr-2"
+                  class="font-medium text-gray-900 dark:text-gray-100 text-xs leading-tight line-clamp-2 flex-1 mr-1"
                   :title="file.filename"
                 >
                   {{ file.filename }}
                 </h3>
                 <button
-                  class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
+                  class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500 min-h-0 h-6 px-1"
                   :class="{ 'text-blue-500': file.notes_count > 0 }"
                   :title="`管理笔记 (${file.notes_count || 0})`"
                   @click="$emit('manage-notes', file, 'file')"
@@ -300,11 +303,10 @@ const hoveredFolder = ref(null)
               <!-- 操作按钮 -->
               <div
                 v-if="isShowOperationBtn"
-                class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700"
+                class="flex gap-1 pt-1.5 border-t border-gray-100 dark:border-gray-700"
               >
                 <button
-                  class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                  title="查看详情"
+                  class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-6 px-1"
                   @click="$emit('view-details', file)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,8 +319,7 @@ const hoveredFolder = ref(null)
                   </svg>
                 </button>
                 <button
-                  class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                  title="重命名"
+                  class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-6 px-1"
                   @click="$emit('rename-file', file)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -331,7 +332,7 @@ const hoveredFolder = ref(null)
                   </svg>
                 </button>
                 <button
-                  class="btn btn-xs btn-ghost text-red-500 hover:text-red-600"
+                  class="btn btn-xs btn-ghost text-red-500 hover:text-red-600 min-h-0 h-6 px-1"
                   @click="$emit('delete-file', file.id)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,9 +348,9 @@ const hoveredFolder = ref(null)
                   :href="`${file.download_url}`"
                   target="_blank"
                   download
-                  class="btn btn-xs btn-ghost flex-1 text-gray-600 hover:text-blue-600"
+                  class="btn btn-xs btn-ghost flex-1 text-gray-600 hover:text-blue-600 min-h-0 h-6 px-1"
                 >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -375,15 +376,15 @@ const hoveredFolder = ref(null)
     <!-- 列表视图 -->
     <div v-else-if="viewMode === 'list'">
       <!-- Folders Section - List View -->
-      <div v-if="folders.length > 0" class="mb-6">
-        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-          <span class="mr-2">📁</span> Folders ({{ folders.length }})
+      <div v-if="folders.length > 0" class="mb-4">
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center">
+          <span class="mr-1.5">📁</span> Folders ({{ folders.length }})
         </h3>
-        <div class="space-y-2">
+        <div class="space-y-1">
           <div
             v-for="folder in folders"
             :key="folder.id"
-            class="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
+            class="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
             @click="$emit('open-folder', folder)"
           >
             <div v-if="selectionMode" class="flex-shrink-0">
@@ -394,18 +395,18 @@ const hoveredFolder = ref(null)
                 @click.stop="toggleFolderSelection(folder.id)"
               />
             </div>
-            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">📁</div>
+            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-2xl">📁</div>
             <div class="flex-1 min-w-0">
-              <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">
+              <h4 class="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                 {{ folder.name }}
               </h4>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-xs text-gray-500 dark:text-gray-400">
                 {{ formatDate(folder.created_at) }}
               </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1">
               <button
-                class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
+                class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500 min-h-0 h-7 px-1.5"
                 :class="{ 'text-blue-500': folder.notes_count > 0 }"
                 :title="`管理笔记 (${folder.notes_count || 0})`"
                 @click.stop="$emit('manage-notes', folder, 'folder')"
@@ -414,8 +415,7 @@ const hoveredFolder = ref(null)
                 <span v-if="folder.notes_count > 0" class="text-xs">{{ folder.notes_count }}</span>
               </button>
               <button
-                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                title="重命名"
+                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-7 px-1.5"
                 @click.stop="$emit('edit-folder', folder)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -428,7 +428,7 @@ const hoveredFolder = ref(null)
                 </svg>
               </button>
               <button
-                class="btn btn-xs btn-ghost text-red-500 hover:text-red-600"
+                class="btn btn-xs btn-ghost text-red-500 hover:text-red-600 min-h-0 h-7 px-1.5"
                 @click.stop="$emit('delete-folder', folder)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -447,14 +447,14 @@ const hoveredFolder = ref(null)
 
       <!-- Files Section - List View -->
       <div v-if="files.length > 0">
-        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-          <span class="mr-2">📄</span> Files ({{ files.length }})
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center">
+          <span class="mr-1.5">📄</span> Files ({{ files.length }})
         </h3>
-        <div class="space-y-2">
+        <div class="space-y-1">
           <div
             v-for="file in files"
             :key="file.id"
-            class="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
+            class="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
             @click="$emit('view-details', file)"
           >
             <div v-if="selectionMode" class="flex-shrink-0">
@@ -467,7 +467,7 @@ const hoveredFolder = ref(null)
             </div>
             <!-- 文件预览缩略图 -->
             <div
-              class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+              class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
             >
               <img
                 v-if="isImage(file.mime_type)"
@@ -475,27 +475,27 @@ const hoveredFolder = ref(null)
                 :alt="file.filename"
                 class="w-full h-full object-cover"
               />
-              <div v-else :class="`text-3xl ${getFileTypeColor(file.mime_type)}`">
+              <div v-else :class="`text-2xl ${getFileTypeColor(file.mime_type)}`">
                 {{ getFileIcon(file.mime_type) }}
               </div>
             </div>
             <!-- 文件信息 -->
             <div class="flex-1 min-w-0">
-              <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">
+              <h4 class="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                 {{ file.filename }}
               </h4>
-              <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 <span>{{ formatSize(file.size) }}</span>
                 <span>•</span>
                 <span>{{ formatDate(file.created_at) }}</span>
                 <span>•</span>
-                <span class="uppercase text-xs">{{ file.mime_type.split('/')[1] }}</span>
+                <span class="uppercase">{{ file.mime_type.split('/')[1] }}</span>
               </div>
             </div>
             <!-- 操作按钮 -->
-            <div v-if="isShowOperationBtn" class="flex items-center gap-2">
+            <div v-if="isShowOperationBtn" class="flex items-center gap-1">
               <button
-                class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
+                class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500 min-h-0 h-7 px-1.5"
                 :class="{ 'text-blue-500': file.notes_count > 0 }"
                 :title="`管理笔记 (${file.notes_count || 0})`"
                 @click.stop="$emit('manage-notes', file, 'file')"
@@ -504,8 +504,7 @@ const hoveredFolder = ref(null)
                 <span v-if="file.notes_count > 0" class="text-xs">{{ file.notes_count }}</span>
               </button>
               <button
-                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                title="查看详情"
+                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-7 px-1.5"
                 @click.stop="$emit('view-details', file)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,8 +517,7 @@ const hoveredFolder = ref(null)
                 </svg>
               </button>
               <button
-                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                title="重命名"
+                class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600 min-h-0 h-7 px-1.5"
                 @click.stop="$emit('rename-file', file)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -532,7 +530,7 @@ const hoveredFolder = ref(null)
                 </svg>
               </button>
               <button
-                class="btn btn-xs btn-ghost text-red-500 hover:text-red-600"
+                class="btn btn-xs btn-ghost text-red-500 hover:text-red-600 min-h-0 h-7 px-1.5"
                 @click.stop="$emit('delete-file', file.id)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -548,7 +546,7 @@ const hoveredFolder = ref(null)
                 :href="`${file.download_url}`"
                 target="_blank"
                 download
-                class="btn btn-xs btn-ghost text-gray-600 hover:text-blue-600"
+                class="btn btn-xs btn-ghost text-gray-600 hover:text-blue-600 min-h-0 h-7 px-1.5"
                 @click.stop
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
