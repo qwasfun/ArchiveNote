@@ -71,7 +71,6 @@ def upgrade() -> None:
         )
 
     # 删除 users 表的 role 列
-    # PostgreSQL 支持直接删除列，SQLite 需要使用 batch 模式
     with op.batch_alter_table("users", schema=None) as batch_op:
         batch_op.drop_column("role")
 

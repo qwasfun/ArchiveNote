@@ -10,7 +10,6 @@ services:
       - ./api:/app
     environment:
       - SECRET_KEY=dev-secret-key-change-in-production
-      # - DATABASE_URL=sqlite+aiosqlite:///./data/app.db
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/archivenote
     command: >
       bash -c "pip install uv &&

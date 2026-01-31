@@ -15,9 +15,6 @@ from alembic.config import Config
 
 load_dotenv()
 
-# 默认使用异步 sqlite 驱动 aiosqlite
-_DEFAULT_SQLITE = "sqlite+aiosqlite:///./data/app.sqlite"
-
 # 支持通过环境变量 `DATABASE_URL` 切换为 Postgres（推荐带 asyncpg 驱动）
 # 如果用户提供常见的 postgres URI（postgres:// 或 postgresql://），
 # 会自动把 scheme 转换为 `postgresql+asyncpg://` 以使用 asyncpg
@@ -25,52 +22,42 @@ raw_db_url = os.getenv("DATABASE_URL", "").strip()
 connect_args = {}
 
 if raw_db_url:
-    # 如果是 sqlite，直接使用，不进行后续的 URL 重组（避免 urlunparse 丢失 /// 问题）
-    if raw_db_url.startswith("sqlite"):
-        DATABASE_URL = raw_db_url
-    else:
-        if raw_db_url.startswith("postgres://"):
-            raw_db_url = raw_db_url.replace("postgres://", "postgresql+asyncpg://", 1)
-        elif raw_db_url.startswith("postgresql://"):
-            raw_db_url = raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if raw_db_url.startswith("postgres://"):
+        raw_db_url = raw_db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif raw_db_url.startswith("postgresql://"):
+        raw_db_url = raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-        # 解析 URL 处理 asyncpg 不支持的参数
-        parsed = urlparse(raw_db_url)
-        query_params = parse_qs(parsed.query)
+    # 解析 URL 处理 asyncpg 不支持的参数
+    parsed = urlparse(raw_db_url)
+    query_params = parse_qs(parsed.query)
 
-        # 处理 sslmode
-        if "sslmode" in query_params:
-            ssl_mode = query_params.pop("sslmode")[0]
-            if ssl_mode == "require":
-                connect_args["ssl"] = "require"
-            elif ssl_mode == "disable":
-                connect_args["ssl"] = False
+    # 处理 sslmode
+    if "sslmode" in query_params:
+        ssl_mode = query_params.pop("sslmode")[0]
+        if ssl_mode == "require":
+            connect_args["ssl"] = "require"
+        elif ssl_mode == "disable":
+            connect_args["ssl"] = False
 
-        # 处理 channel_binding (asyncpg 不支持此参数作为 kwarg，移除以避免报错)
-        if "channel_binding" in query_params:
-            query_params.pop("channel_binding")
+    # 处理 channel_binding (asyncpg 不支持此参数作为 kwarg，移除以避免报错)
+    if "channel_binding" in query_params:
+        query_params.pop("channel_binding")
 
-        # 重组 URL
-        new_query = urlencode(query_params, doseq=True)
-        parsed = parsed._replace(query=new_query)
-        DATABASE_URL = urlunparse(parsed)
+    # 重组 URL
+    new_query = urlencode(query_params, doseq=True)
+    parsed = parsed._replace(query=new_query)
+    DATABASE_URL = urlunparse(parsed)
 else:
-    DATABASE_URL = _DEFAULT_SQLITE
+    raise ValueError("DATABASE_URL environment variable is required")
 
-# 对 sqlite 使用特定 connect_args（aiosqlite 的 check_same_thread）
-if DATABASE_URL.startswith("sqlite"):
-    engine = create_async_engine(
-        DATABASE_URL, connect_args={"check_same_thread": False}
-    )
-else:
-    engine = create_async_engine(
-        DATABASE_URL,
-        connect_args=connect_args,
-        pool_size=20,  # 增加连接池大小
-        max_overflow=40,  # 允许超出连接池的额外连接数
-        pool_pre_ping=True,  # 连接前ping确保连接有效
-        pool_recycle=3600,  # 1小时后回收连接
-    )
+engine = create_async_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    pool_size=20,  # 增加连接池大小
+    max_overflow=40,  # 允许超出连接池的额外连接数
+    pool_pre_ping=True,  # 连接前ping确保连接有效
+    pool_recycle=3600,  # 1小时后回收连接
+)
 
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
