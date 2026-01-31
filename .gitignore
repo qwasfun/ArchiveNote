@@ -1,4 +1,4 @@
 .idea
 .env
 .agent
-app/data/app.db
+api/data/
