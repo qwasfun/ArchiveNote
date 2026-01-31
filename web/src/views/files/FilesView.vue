@@ -44,6 +44,7 @@ const selectedFiles = ref([])
 const selectedFolders = ref([])
 const isSelectionMode = ref(false)
 const showBatchMoveModal = ref(false)
+const viewMode = ref('grid') // 'grid' or 'list'
 const moveTargetFolderId = ref(null)
 const moveBreadcrumbs = ref([])
 const moveFolders = ref([])
@@ -432,6 +433,39 @@ onMounted(async () => {
             </p>
           </div>
           <div class="flex gap-2">
+            <!-- 视图切换按钮 -->
+            <div class="join">
+              <button
+                class="btn btn-sm join-item"
+                :class="viewMode === 'grid' ? 'btn-active' : 'btn-ghost'"
+                title="网格视图"
+                @click="viewMode = 'grid'"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+                  />
+                </svg>
+              </button>
+              <button
+                class="btn btn-sm join-item"
+                :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
+                title="列表视图"
+                @click="viewMode = 'list'"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
             <button
               class="btn"
               :class="isSelectionMode ? 'btn-secondary' : 'btn-ghost'"
@@ -716,6 +750,7 @@ onMounted(async () => {
               :selection-mode="isSelectionMode"
               :selected-files="selectedFiles"
               :selected-folders="selectedFolders"
+              :view-mode="viewMode"
               @view-details="handleViewDetails"
               @selection-change="handleSelectionChange"
               @delete-file="handleDelete"
