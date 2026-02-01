@@ -61,7 +61,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """删除存储后端配置表"""
-    # 使用 batch mode 来支持 SQLite
     with op.batch_alter_table("files", schema=None) as batch_op:
         batch_op.drop_constraint("fk_files_storage_backend_id", type_="foreignkey")
         batch_op.drop_column("storage_backend_id")
