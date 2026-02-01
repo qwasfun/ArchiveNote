@@ -246,7 +246,7 @@ class StorageBackendConfig(Base):
     id = Column(
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
-    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
+    workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
     backend_type: Mapped[str] = mapped_column(String, nullable=False)  # local or s3
     is_active: Mapped[bool] = mapped_column(Integer, default=0)  # 0: False, 1: True
