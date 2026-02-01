@@ -50,70 +50,32 @@ docker-compose up -d
 
 ## 💻 本地开发
 
-### 前置要求
-
-- Python 3.13
-- Node.js 24
-- npm
-
-### 环境配置
-
-创建 `api/.env` 文件配置环境变量：
-
-```env
-# 数据库配置
-DATABASE_URL=sqlite+aiosqlite:///./data/app.db
-# DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
-
-# JWT 配置
-SECRET_KEY=your-secret-key-here
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-ALGORITHM=HS256
+```sh
+# 启动（带日志）
+docker compose -f docker-compose.dev.yml up
 ```
 
-### 后端设置
+更多命令
 
-```bash
-cd api
+```sh
+# 后台启动
+docker compose -f docker-compose.dev.yml up -d
 
-# 创建虚拟环境
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# 查看日志
+docker compose -f docker-compose.dev.yml logs -f
 
-# 安装依赖
-pip install uv
-uv sync
+# 停止
+docker compose -f docker-compose.dev.yml down
 
-# 运行数据库迁移
-alembic upgrade head
-
-# 启动开发服务器
-python main.py
+# 重新构建（如果修改了依赖）
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-后端将在 http://localhost:8000 运行
+前端开发服务器：http://localhost:5173
 
-### 前端设置
+后端 API：http://localhost:8000
 
-```bash
-cd web
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-```
-
-前端将在 http://localhost:5173 运行
-
-## 📖 API 文档
-
-启动后端服务后，访问以下地址查看自动生成的 API 文档：
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+API 文档：http://localhost:8000/docs
 
 ## 📚 数据库迁移
 
