@@ -228,9 +228,9 @@ onBeforeUnmount(() => {
       <div
         v-for="page in pdfPages"
         :key="page.pageNumber"
+        :ref="(el) => setPageRef(el, page.pageNumber)"
         :data-page-number="page.pageNumber"
         class="relative bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-2 flex justify-center"
-        :ref="(el) => setPageRef(el, page.pageNumber)"
       >
         <canvas :ref="(el) => setCanvasRef(el, page.pageNumber)" class="max-w-full"></canvas>
 

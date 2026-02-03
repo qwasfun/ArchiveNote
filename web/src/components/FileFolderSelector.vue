@@ -194,10 +194,10 @@ onMounted(() => {
         </svg>
         <input
           v-model="searchQuery"
-          @input="handleSearch"
           type="text"
           placeholder="搜索文件..."
           class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800"
+          @input="handleSearch"
         />
       </div>
 
@@ -218,11 +218,11 @@ onMounted(() => {
 
     <!-- 内容区域 -->
     <DragUploadZone
-      :showSelected="true"
+      :show-selected="true"
       :folder-id="currentFolderId"
       :upload-mode="uploadMode"
-      @upload-complete="handleDragUploadComplete"
       class="flex-1 overflow-y-auto"
+      @upload-complete="handleDragUploadComplete"
     >
       <div v-if="loading" class="flex justify-center items-center py-12">
         <span class="loading loading-spinner loading-lg"></span>

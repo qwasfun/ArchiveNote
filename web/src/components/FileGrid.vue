@@ -105,12 +105,12 @@ const hoveredFolder = ref(null)
           @mouseenter="hoveredFolder = folder.id"
           @mouseleave="hoveredFolder = null"
         >
-          <div class="absolute top-2 left-2 z-10" v-if="selectionMode">
+          <div v-if="selectionMode" class="absolute top-2 left-2 z-10">
             <input
               type="checkbox"
               :checked="localSelectedFolders.includes(folder.id)"
-              @click.stop="toggleFolderSelection(folder.id)"
               class="checkbox checkbox-sm checkbox-primary"
+              @click.stop="toggleFolderSelection(folder.id)"
             />
           </div>
           <div
@@ -137,10 +137,10 @@ const hoveredFolder = ref(null)
                 {{ folder.name }}
               </h3>
               <button
-                @click.stop="$emit('manage-notes', folder, 'folder')"
                 class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
                 :class="{ 'text-blue-500': folder.notes_count > 0 }"
                 :title="`管理笔记 (${folder.notes_count || 0})`"
+                @click.stop="$emit('manage-notes', folder, 'folder')"
               >
                 📝
                 <span v-if="folder.notes_count > 0" class="text-xs">{{ folder.notes_count }}</span>
@@ -153,8 +153,8 @@ const hoveredFolder = ref(null)
               <div class="flex-1">
                 <button
                   class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                  @click.stop="$emit('edit-folder', folder)"
                   title="重命名"
+                  @click.stop="$emit('edit-folder', folder)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -199,12 +199,12 @@ const hoveredFolder = ref(null)
           @mouseenter="hoveredFile = file.id"
           @mouseleave="hoveredFile = null"
         >
-          <div class="absolute top-2 left-2 z-10" v-if="selectionMode">
+          <div v-if="selectionMode" class="absolute top-2 left-2 z-10">
             <input
               type="checkbox"
               :checked="localSelectedFiles.includes(file.id)"
-              @click.stop="toggleFileSelection(file.id)"
               class="checkbox checkbox-sm checkbox-primary"
+              @click.stop="toggleFileSelection(file.id)"
             />
           </div>
           <!-- 文件预览区域 -->
@@ -238,9 +238,9 @@ const hoveredFolder = ref(null)
             >
               <div class="flex gap-2">
                 <button
-                  @click.stop="$emit('view-details', file)"
                   class="btn btn-sm btn-circle bg-white/90 hover:bg-white text-gray-700 border-0 shadow-lg"
                   title="查看文件"
+                  @click.stop="$emit('view-details', file)"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -271,10 +271,10 @@ const hoveredFolder = ref(null)
                 {{ file.filename }}
               </h3>
               <button
-                @click="$emit('manage-notes', file, 'file')"
                 class="btn btn-xs btn-outline text-gray-400 hover:text-blue-500"
                 :class="{ 'text-blue-500': file.notes_count > 0 }"
                 :title="`管理笔记 (${file.notes_count || 0})`"
+                @click="$emit('manage-notes', file, 'file')"
               >
                 📝
                 <span v-if="file.notes_count > 0" class="text-xs">{{ file.notes_count }}</span>
@@ -288,13 +288,13 @@ const hoveredFolder = ref(null)
 
             <!-- 操作按钮 -->
             <div
-              class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700"
               v-if="isShowOperationBtn"
+              class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700"
             >
               <button
                 class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                @click="$emit('view-details', file)"
                 title="查看详情"
+                @click="$emit('view-details', file)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -307,8 +307,8 @@ const hoveredFolder = ref(null)
               </button>
               <button
                 class="btn btn-xs btn-ghost text-gray-500 hover:text-blue-600"
-                @click="$emit('rename-file', file)"
                 title="重命名"
+                @click="$emit('rename-file', file)"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path

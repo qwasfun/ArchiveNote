@@ -433,29 +433,29 @@ onMounted(async () => {
           </div>
           <div class="flex gap-2">
             <button
-              @click="toggleSelectionMode"
               class="btn"
               :class="isSelectionMode ? 'btn-secondary' : 'btn-ghost'"
+              @click="toggleSelectionMode"
             >
               {{ isSelectionMode ? '取消选择' : '批量选择' }}
             </button>
             <div v-if="isSelectionMode" class="flex gap-2">
               <button
-                @click="batchDelete"
                 class="btn btn-error"
                 :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+                @click="batchDelete"
               >
                 删除
               </button>
               <button
-                @click="openBatchMoveModal"
                 class="btn btn-info"
                 :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+                @click="openBatchMoveModal"
               >
                 移动
               </button>
             </div>
-            <button @click="showCreateFolderModal = true" class="btn btn-primary gap-2">
+            <button class="btn btn-primary gap-2" @click="showCreateFolderModal = true">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5"
@@ -472,7 +472,7 @@ onMounted(async () => {
               </svg>
               新建文件夹
             </button>
-            <button @click="showUploadModal = !showUploadModal" class="btn btn-primary gap-2">
+            <button class="btn btn-primary gap-2" @click="showUploadModal = !showUploadModal">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -492,8 +492,8 @@ onMounted(async () => {
         <ul>
           <li v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
             <a
-              @click="navigateBreadcrumb(index)"
               :class="{ 'font-bold': index === breadcrumbs.length - 1 }"
+              @click="navigateBreadcrumb(index)"
             >
               {{ crumb.name }}
             </a>
@@ -512,12 +512,12 @@ onMounted(async () => {
             type="text"
             placeholder="Folder Name"
             class="input input-bordered w-full mb-4"
-            @keyup.enter="renameFolder"
             autoFocus
+            @keyup.enter="renameFolder"
           />
           <div class="flex justify-end gap-2">
-            <button @click="showRenameFolderModal = false" class="btn btn-ghost">取消</button>
-            <button @click="renameFolder" class="btn btn-primary">保存</button>
+            <button class="btn btn-ghost" @click="showRenameFolderModal = false">取消</button>
+            <button class="btn btn-primary" @click="renameFolder">保存</button>
           </div>
         </div>
       </div>
@@ -534,12 +534,12 @@ onMounted(async () => {
             type="text"
             placeholder="File Name"
             class="input input-bordered w-full mb-4"
-            @keyup.enter="confirmRenameFile"
             autoFocus
+            @keyup.enter="confirmRenameFile"
           />
           <div class="flex justify-end gap-2">
-            <button @click="showRenameFileModal = false" class="btn btn-ghost">取消</button>
-            <button @click="confirmRenameFile" class="btn btn-primary">保存</button>
+            <button class="btn btn-ghost" @click="showRenameFileModal = false">取消</button>
+            <button class="btn btn-primary" @click="confirmRenameFile">保存</button>
           </div>
         </div>
       </div>
@@ -556,12 +556,12 @@ onMounted(async () => {
             type="text"
             placeholder="Folder Name"
             class="input input-bordered w-full mb-4"
-            @keyup.enter="createFolder"
             autoFocus
+            @keyup.enter="createFolder"
           />
           <div class="flex justify-end gap-2">
-            <button @click="showCreateFolderModal = false" class="btn btn-ghost">取消</button>
-            <button @click="createFolder" class="btn btn-primary">新建</button>
+            <button class="btn btn-ghost" @click="showCreateFolderModal = false">取消</button>
+            <button class="btn btn-primary" @click="createFolder">新建</button>
           </div>
         </div>
       </div>
@@ -576,9 +576,9 @@ onMounted(async () => {
 
             <button
               v-if="supportsDirectUpload"
-              @click="uploadMode = uploadMode === 'traditional' ? 'direct' : 'traditional'"
               class="btn btn-outline btn-sm"
               :title="uploadMode === 'traditional' ? '切换到直传模式' : '切换到普通模式'"
+              @click="uploadMode = uploadMode === 'traditional' ? 'direct' : 'traditional'"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -685,7 +685,7 @@ onMounted(async () => {
           <div class="text-6xl mb-4">📂</div>
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">暂无文件</h3>
           <p class="text-gray-500 mb-6">开始上传一些文件，让您的内容库丰富起来吧！</p>
-          <button @click="showUploadModal = true" class="btn btn-primary">📤 上传第一个文件</button>
+          <button class="btn btn-primary" @click="showUploadModal = true">📤 上传第一个文件</button>
         </div>
 
         <div
@@ -701,8 +701,8 @@ onMounted(async () => {
         </div>
 
         <DragUploadZone
-          :showSelected="false"
           v-else
+          :show-selected="false"
           :folder-id="currentFolderId"
           :upload-mode="uploadMode"
           @upload-complete="handleDragUploadComplete"
@@ -726,7 +726,7 @@ onMounted(async () => {
               @rename-file="handleRenameFile"
             />
             <!-- Pagination -->
-            <div class="flex justify-center mt-6" v-if="totalPages > 1">
+            <div v-if="totalPages > 1" class="flex justify-center mt-6">
               <div class="join">
                 <button
                   class="join-item btn"
@@ -786,8 +786,8 @@ onMounted(async () => {
           <ul>
             <li v-for="(crumb, index) in moveBreadcrumbs" :key="crumb.id">
               <a
-                @click="navigateMoveBreadcrumb(index)"
                 :class="{ 'font-bold': index === moveBreadcrumbs.length - 1 }"
+                @click="navigateMoveBreadcrumb(index)"
               >
                 {{ crumb.name }}
               </a>
@@ -807,7 +807,7 @@ onMounted(async () => {
           </div>
           <ul v-else class="menu w-full p-0">
             <li v-for="folder in moveFolders" :key="folder.id">
-              <a @click="enterMoveFolder(folder)" class="flex justify-between">
+              <a class="flex justify-between" @click="enterMoveFolder(folder)">
                 <span class="flex items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -845,8 +845,8 @@ onMounted(async () => {
             移动到: {{ moveBreadcrumbs[moveBreadcrumbs.length - 1]?.name }}
           </div>
           <div class="flex gap-2">
-            <button @click="showBatchMoveModal = false" class="btn btn-ghost">取消</button>
-            <button @click="confirmBatchMove" class="btn btn-primary">移动到此处</button>
+            <button class="btn btn-ghost" @click="showBatchMoveModal = false">取消</button>
+            <button class="btn btn-primary" @click="confirmBatchMove">移动到此处</button>
           </div>
         </div>
       </div>

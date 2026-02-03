@@ -1,3 +1,28 @@
+<script setup>
+import { formatDate, formatSize } from '@/utils/format'
+import {
+  getFileIcon,
+  getFileTypeColor,
+  isImage,
+  isVideo,
+  isAudio,
+  isPdf,
+  isText,
+} from '@/utils/file'
+
+import PDFViewer from './PDFViewer.vue'
+import TextViewer from './TextViewer.vue'
+
+defineProps({
+  file: {
+    type: Object,
+    default: null,
+  },
+})
+
+defineEmits(['close', 'add-note'])
+</script>
+
 <template>
   <div
     v-if="file"
@@ -28,9 +53,9 @@
         </div>
         <div class="flex items-center gap-2">
           <button
-            @click="$emit('add-note', file)"
             class="btn btn-sm btn-primary"
             title="为此文件添加笔记"
+            @click="$emit('add-note', file)"
           >
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -67,7 +92,7 @@
             </svg>
             详情
           </router-link>
-          <button @click="$emit('close')" class="btn btn-sm btn-circle btn-ghost">
+          <button class="btn btn-sm btn-circle btn-ghost" @click="$emit('close')">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -162,28 +187,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { formatDate, formatSize } from '@/utils/format'
-import {
-  getFileIcon,
-  getFileTypeColor,
-  isImage,
-  isVideo,
-  isAudio,
-  isPdf,
-  isText,
-} from '@/utils/file'
-
-import PDFViewer from './PDFViewer.vue'
-import TextViewer from './TextViewer.vue'
-
-const props = defineProps({
-  file: {
-    type: Object,
-    default: null,
-  },
-})
-
-defineEmits(['close', 'add-note'])
-</script>
