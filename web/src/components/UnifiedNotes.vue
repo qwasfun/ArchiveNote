@@ -2,8 +2,6 @@
 import { ref, watch, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import fileService from '../api/fileService'
-import folderService from '../api/folderService'
 import noteService from '../api/noteService'
 import { formatDate } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
@@ -230,7 +228,7 @@ watch(
             </p>
           </div>
         </div>
-        <button @click="$emit('close')" class="btn btn-sm btn-circle btn-ghost">
+        <button class="btn btn-sm btn-circle btn-ghost" @click="$emit('close')">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -247,7 +245,7 @@ watch(
         <!-- 左侧：笔记列表 -->
         <div class="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <button @click="startNewNote" class="w-full btn btn-primary btn-sm">
+            <button class="w-full btn btn-primary btn-sm" @click="startNewNote">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -307,9 +305,9 @@ watch(
                   </span>
                   <div class="flex gap-1">
                     <button
-                      @click.stop="editNote(note)"
                       class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                       title="编辑"
+                      @click.stop="editNote(note)"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -321,9 +319,9 @@ watch(
                       </svg>
                     </button>
                     <button
-                      @click.stop="detachNote(note.id)"
                       class="btn btn-xs btn-ghost text-gray-400 hover:text-orange-500"
                       title="取消关联"
+                      @click.stop="detachNote(note.id)"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -335,9 +333,9 @@ watch(
                       </svg>
                     </button>
                     <button
-                      @click.stop="deleteNote(note.id)"
                       class="btn btn-xs btn-ghost text-gray-400 hover:text-red-500"
                       title="删除"
+                      @click.stop="deleteNote(note.id)"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -374,8 +372,8 @@ watch(
               ></textarea>
             </div>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-              <button @click="cancelEdit" class="btn btn-ghost">取消</button>
-              <button @click="saveNote" class="btn btn-primary">
+              <button class="btn btn-ghost" @click="cancelEdit">取消</button>
+              <button class="btn btn-primary" @click="saveNote">
                 {{ editingNote.id ? '保存' : '创建并关联' }}
               </button>
             </div>

@@ -1,3 +1,140 @@
+<script setup>
+import { ref, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import fileService from '../../api/fileService.js'
+import noteService from '../../api/noteService.js'
+import FileGrid from '../../components/FileGrid.vue'
+import FileDetails from '../../components/FileDetails.vue'
+import UnifiedNotes from '../../components/UnifiedNotes.vue'
+
+const route = useRoute()
+const router = useRouter()
+
+const query = ref('')
+const searchInput = ref('')
+const files = ref([])
+const notes = ref([])
+const loading = ref(false)
+const searchTime = ref(0)
+const activeTab = ref('all')
+const detailsFile = ref(null)
+const showDetails = ref(false)
+const notesItem = ref(null)
+const notesItemType = ref('file')
+const showNotes = ref(false)
+
+// 计算属性
+const totalResults = computed(() => files.value.length + notes.value.length)
+const hasResults = computed(() => totalResults.value > 0)
+
+// 格式化日期
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days === 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString()
+}
+
+// 高亮搜索文本
+const highlightText = (text, searchQuery) => {
+  if (!searchQuery || !text) return text
+
+  // 简单高亮实现，实际项目中可能需要更复杂的处理
+  const regex = new RegExp(`(${searchQuery})`, 'gi')
+  return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-600">$1</mark>')
+}
+
+// 执行搜索
+const performSearch = async () => {
+  const searchQuery = searchInput.value.trim() || query.value.trim()
+  if (!searchQuery) return
+
+  // 更新URL
+  if (searchQuery !== route.query.q) {
+    router.push({ query: { q: searchQuery } })
+    return
+  }
+
+  loading.value = true
+  const startTime = Date.now()
+
+  try {
+    const [filesRes, notesRes] = await Promise.all([
+      fileService.getFiles({ q: searchQuery }),
+      noteService.getNotes({ q: searchQuery }),
+    ])
+
+    files.value = filesRes.data || []
+    notes.value = notesRes.data || []
+
+    searchTime.value = Date.now() - startTime
+  } catch (error) {
+    console.error('Search failed', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 事件处理
+const handleDelete = async (id) => {
+  if (!confirm('确定要删除这个文件吗？')) return
+  try {
+    await fileService.deleteFile(id)
+    showDetails.value = false
+    await performSearch()
+  } catch (error) {
+    console.error('Failed to delete file', error)
+  }
+}
+
+const handleViewDetails = (file) => {
+  detailsFile.value = file
+  showDetails.value = true
+}
+
+const handleCloseDetails = () => {
+  showDetails.value = false
+  detailsFile.value = null
+}
+
+const handleManageNotes = (item, type) => {
+  notesItem.value = item
+  notesItemType.value = type
+  showNotes.value = true
+  detailsFile.value = null
+}
+
+const closeNotes = () => {
+  showNotes.value = false
+  notesItem.value = null
+}
+
+const openNote = (note) => {
+  router.push({ path: `/note/${note.id}` })
+}
+
+// 监听路由查询参数变化
+watch(
+  () => route.query.q,
+  (newQ) => {
+    query.value = newQ || ''
+    searchInput.value = newQ || ''
+    if (newQ) {
+      performSearch()
+    } else {
+      files.value = []
+      notes.value = []
+    }
+  },
+  { immediate: true },
+)
+</script>
+
 <template>
   <div class="bg-gray-50 dark:bg-gray-900">
     <div class="container mx-auto px-4 py-8">
@@ -35,15 +172,15 @@
               </div>
               <input
                 v-model="searchInput"
-                @keyup.enter="performSearch"
                 type="text"
                 placeholder="搜索文件名、笔记内容..."
                 class="w-full pl-12 pr-16 py-4 text-lg border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                @keyup.enter="performSearch"
               />
               <button
-                @click="performSearch"
                 class="absolute right-2 top-1/2 transform -translate-y-1/2 btn btn-primary btn-sm"
                 :disabled="loading"
+                @click="performSearch"
               >
                 <span v-if="loading" class="loading loading-spinner loading-xs"></span>
                 <span v-else>搜索</span>
@@ -66,20 +203,20 @@
           <!-- 结果类型筛选 -->
           <div class="flex gap-2">
             <button
-              @click="activeTab = 'all'"
               :class="['btn btn-sm', activeTab === 'all' ? 'btn-primary' : 'btn-ghost']"
+              @click="activeTab = 'all'"
             >
               全部 ({{ totalResults }})
             </button>
             <button
-              @click="activeTab = 'files'"
               :class="['btn btn-sm', activeTab === 'files' ? 'btn-primary' : 'btn-ghost']"
+              @click="activeTab = 'files'"
             >
               文件 ({{ files.length }})
             </button>
             <button
-              @click="activeTab = 'notes'"
               :class="['btn btn-sm', activeTab === 'notes' ? 'btn-primary' : 'btn-ghost']"
+              @click="activeTab = 'notes'"
             >
               笔记 ({{ notes.length }})
             </button>
@@ -252,140 +389,3 @@
     />
   </div>
 </template>
-
-<script setup>
-import { ref, watch, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import fileService from '../../api/fileService.js'
-import noteService from '../../api/noteService.js'
-import FileGrid from '../../components/FileGrid.vue'
-import FileDetails from '../../components/FileDetails.vue'
-import UnifiedNotes from '../../components/UnifiedNotes.vue'
-
-const route = useRoute()
-const router = useRouter()
-
-const query = ref('')
-const searchInput = ref('')
-const files = ref([])
-const notes = ref([])
-const loading = ref(false)
-const searchTime = ref(0)
-const activeTab = ref('all')
-const detailsFile = ref(null)
-const showDetails = ref(false)
-const notesItem = ref(null)
-const notesItemType = ref('file')
-const showNotes = ref(false)
-
-// 计算属性
-const totalResults = computed(() => files.value.length + notes.value.length)
-const hasResults = computed(() => totalResults.value > 0)
-
-// 格式化日期
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now - date
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days}天前`
-  return date.toLocaleDateString()
-}
-
-// 高亮搜索文本
-const highlightText = (text, searchQuery) => {
-  if (!searchQuery || !text) return text
-
-  // 简单高亮实现，实际项目中可能需要更复杂的处理
-  const regex = new RegExp(`(${searchQuery})`, 'gi')
-  return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-600">$1</mark>')
-}
-
-// 执行搜索
-const performSearch = async () => {
-  const searchQuery = searchInput.value.trim() || query.value.trim()
-  if (!searchQuery) return
-
-  // 更新URL
-  if (searchQuery !== route.query.q) {
-    router.push({ query: { q: searchQuery } })
-    return
-  }
-
-  loading.value = true
-  const startTime = Date.now()
-
-  try {
-    const [filesRes, notesRes] = await Promise.all([
-      fileService.getFiles({ q: searchQuery }),
-      noteService.getNotes({ q: searchQuery }),
-    ])
-
-    files.value = filesRes.data || []
-    notes.value = notesRes.data || []
-
-    searchTime.value = Date.now() - startTime
-  } catch (error) {
-    console.error('Search failed', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-// 事件处理
-const handleDelete = async (id) => {
-  if (!confirm('确定要删除这个文件吗？')) return
-  try {
-    await fileService.deleteFile(id)
-    showDetails.value = false
-    await performSearch()
-  } catch (error) {
-    console.error('Failed to delete file', error)
-  }
-}
-
-const handleViewDetails = (file) => {
-  detailsFile.value = file
-  showDetails.value = true
-}
-
-const handleCloseDetails = () => {
-  showDetails.value = false
-  detailsFile.value = null
-}
-
-const handleManageNotes = (item, type) => {
-  notesItem.value = item
-  notesItemType.value = type
-  showNotes.value = true
-  detailsFile.value = null
-}
-
-const closeNotes = () => {
-  showNotes.value = false
-  notesItem.value = null
-}
-
-const openNote = (note) => {
-  router.push({ path: `/note/${note.id}` })
-}
-
-// 监听路由查询参数变化
-watch(
-  () => route.query.q,
-  (newQ) => {
-    query.value = newQ || ''
-    searchInput.value = newQ || ''
-    if (newQ) {
-      performSearch()
-    } else {
-      files.value = []
-      notes.value = []
-    }
-  },
-  { immediate: true },
-)
-</script>

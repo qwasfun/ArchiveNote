@@ -205,10 +205,10 @@ onMounted(async () => {
                   formatDate(note.updated_at)
                 }}</span>
                 <div class="flex gap-1">
-                  <span class="badge" v-if="note.folders && note.folders.length > 0"
+                  <span v-if="note.folders && note.folders.length > 0" class="badge"
                     >📁 {{ note.folders.length }}</span
                   >
-                  <span class="badge" v-if="note.files && note.files.length > 0"
+                  <span v-if="note.files && note.files.length > 0" class="badge"
                     >📎 {{ note.files.length }}</span
                   >
                 </div>
@@ -221,7 +221,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="p-2 border-t border-base-200" v-if="totalPages > 1">
+        <div v-if="totalPages > 1" class="p-2 border-t border-base-200">
           <div class="join flex justify-center">
             <button
               class="join-item btn btn-sm"

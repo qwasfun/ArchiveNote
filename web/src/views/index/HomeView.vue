@@ -1,3 +1,83 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import fileService from '../../api/fileService.js'
+import noteService from '../../api/noteService.js'
+import statsService from '../../api/statsService.js'
+import { formatSize } from '@/utils/format'
+import { getFileIcon, getFileTypeColor } from '@/utils/file'
+import { useAuthStore } from '@/stores/auth.js'
+
+const router = useRouter()
+
+const stats = ref({
+  totalFiles: 0,
+  totalNotes: 0,
+  totalSize: 0,
+  todayActivity: 0,
+})
+
+const recentFiles = ref([])
+const recentNotes = ref([])
+
+// 格式化日期
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days === 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString()
+}
+
+// 导航到页面
+const goToFiles = () => router.push('/files')
+const goToNotes = () => router.push('/notes')
+
+// 加载数据
+const loadData = async () => {
+  try {
+    // 加载统计数据
+    const statsData = await statsService.getStats()
+    stats.value.totalFiles = statsData.file_count
+    stats.value.totalSize = statsData.storage_usage
+    stats.value.totalNotes = statsData.note_count
+    stats.value.todayActivity = statsData.today_activity
+
+    // 加载文件列表用于展示最近文件
+    const filesResponse = await fileService.getFiles()
+    const files = filesResponse.data || []
+
+    // 最近文件（最多5个）
+    recentFiles.value = files
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+
+    // 加载笔记列表用于展示最近笔记
+    const notesResponse = await noteService.getNotes()
+    const notes = notesResponse.data || []
+
+    // 最近笔记（最多5个）
+    recentNotes.value = notes
+      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+      .slice(0, 5)
+  } catch (error) {
+    console.error('Failed to load dashboard data', error)
+  }
+}
+
+const { isAuthenticated } = useAuthStore()
+
+onMounted(() => {
+  if (isAuthenticated) {
+    loadData()
+  }
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- 头部欢迎区域 -->
@@ -336,83 +416,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import fileService from '../../api/fileService.js'
-import noteService from '../../api/noteService.js'
-import statsService from '../../api/statsService.js'
-import { formatSize } from '@/utils/format'
-import { getFileIcon, getFileTypeColor } from '@/utils/file'
-import { useAuthStore } from '@/stores/auth.js'
-
-const router = useRouter()
-
-const stats = ref({
-  totalFiles: 0,
-  totalNotes: 0,
-  totalSize: 0,
-  todayActivity: 0,
-})
-
-const recentFiles = ref([])
-const recentNotes = ref([])
-
-// 格式化日期
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now - date
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days}天前`
-  return date.toLocaleDateString()
-}
-
-// 导航到页面
-const goToFiles = () => router.push('/files')
-const goToNotes = () => router.push('/notes')
-
-// 加载数据
-const loadData = async () => {
-  try {
-    // 加载统计数据
-    const statsData = await statsService.getStats()
-    stats.value.totalFiles = statsData.file_count
-    stats.value.totalSize = statsData.storage_usage
-    stats.value.totalNotes = statsData.note_count
-    stats.value.todayActivity = statsData.today_activity
-
-    // 加载文件列表用于展示最近文件
-    const filesResponse = await fileService.getFiles()
-    const files = filesResponse.data || []
-
-    // 最近文件（最多5个）
-    recentFiles.value = files
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 5)
-
-    // 加载笔记列表用于展示最近笔记
-    const notesResponse = await noteService.getNotes()
-    const notes = notesResponse.data || []
-
-    // 最近笔记（最多5个）
-    recentNotes.value = notes
-      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-      .slice(0, 5)
-  } catch (error) {
-    console.error('Failed to load dashboard data', error)
-  }
-}
-
-const { isAuthenticated } = useAuthStore()
-
-onMounted(() => {
-  if (isAuthenticated) {
-    loadData()
-  }
-})
-</script>

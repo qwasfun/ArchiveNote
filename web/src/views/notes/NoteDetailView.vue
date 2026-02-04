@@ -307,7 +307,7 @@ onMounted(async () => {
         <div class="text-6xl mb-4">📝</div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">笔记未找到</h3>
         <p class="text-gray-500 mb-6">该笔记可能已被删除或不存在</p>
-        <button @click="handleBack" class="btn btn-primary">返回笔记列表</button>
+        <button class="btn btn-primary" @click="handleBack">返回笔记列表</button>
       </div>
     </div>
 

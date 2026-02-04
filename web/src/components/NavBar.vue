@@ -1,3 +1,36 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { logout } from '@/api/authService'
+
+const router = useRouter()
+const authStore = useAuthStore()
+const searchQuery = ref('')
+const showMobileMenu = ref(false)
+
+// 检查是否已登录（直接使用 store 的计算属性）
+const isLoggedIn = computed(() => authStore.isAuthenticated)
+
+// 检查是否为系统管理员
+const isSystemAdmin = computed(() => authStore.isSystemAdmin)
+
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    router.push({ name: 'search', query: { q: searchQuery.value } })
+    showMobileMenu.value = false
+  }
+}
+
+const handleLogout = async () => {
+  // 使用 auth store 清除认证信息
+  authStore.clearAuth()
+  showMobileMenu.value = false
+  await logout()
+  router.push('/auth/login')
+}
+</script>
+
 <template>
   <header
     class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40"
@@ -87,17 +120,17 @@
             </div>
             <input
               v-model="searchQuery"
-              @keyup.enter="handleSearch"
               type="text"
               placeholder="搜索文件和笔记..."
               class="w-56 pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+              @keyup.enter="handleSearch"
             />
           </div>
 
           <!-- 用户认证按钮 -->
           <div class="flex items-center gap-2">
             <template v-if="isLoggedIn">
-              <button @click="handleLogout" class="btn btn-sm btn-ghost gap-2 hidden lg:flex">
+              <button class="btn btn-sm btn-ghost gap-2 hidden lg:flex" @click="handleLogout">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -137,8 +170,8 @@
 
           <!-- 移动端菜单按钮 -->
           <button
-            @click="showMobileMenu = !showMobileMenu"
             class="lg:hidden btn btn-sm btn-ghost btn-circle"
+            @click="showMobileMenu = !showMobileMenu"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -233,10 +266,10 @@
               </div>
               <input
                 v-model="searchQuery"
-                @keyup.enter="handleSearch"
                 type="text"
                 placeholder="搜索..."
                 class="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                @keyup.enter="handleSearch"
               />
             </div>
           </div>
@@ -245,8 +278,8 @@
           <div class="px-4 pt-2 space-y-2">
             <template v-if="isLoggedIn">
               <button
-                @click="handleLogout"
                 class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
+                @click="handleLogout"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -297,36 +330,3 @@
     </div>
   </header>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { logout } from '@/api/authService'
-
-const router = useRouter()
-const authStore = useAuthStore()
-const searchQuery = ref('')
-const showMobileMenu = ref(false)
-
-// 检查是否已登录（直接使用 store 的计算属性）
-const isLoggedIn = computed(() => authStore.isAuthenticated)
-
-// 检查是否为系统管理员
-const isSystemAdmin = computed(() => authStore.isSystemAdmin)
-
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    router.push({ name: 'search', query: { q: searchQuery.value } })
-    showMobileMenu.value = false
-  }
-}
-
-const handleLogout = async () => {
-  // 使用 auth store 清除认证信息
-  authStore.clearAuth()
-  showMobileMenu.value = false
-  await logout()
-  router.push('/auth/login')
-}
-</script>

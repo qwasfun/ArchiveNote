@@ -229,12 +229,12 @@ const uploadFiles = async (filesWithPaths) => {
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <input type="file" multiple class="hidden" ref="fileInput" @change="handleFileSelect" />
+    <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileSelect" />
     <input
+      ref="folderInput"
       type="file"
       webkitdirectory
       class="hidden"
-      ref="folderInput"
       @change="handleFolderSelect"
     />
 
@@ -254,8 +254,8 @@ const uploadFiles = async (filesWithPaths) => {
       <div class="text-4xl mb-4">📂</div>
       <p class="text-lg font-medium mb-4">拖放文件或文件夹到这里</p>
       <div class="flex gap-3 justify-center">
-        <button @click="triggerFileInput" class="btn btn-primary btn-sm">📄 上传文件</button>
-        <button @click="triggerFolderInput" class="btn btn-secondary btn-sm">📁 上传文件夹</button>
+        <button class="btn btn-primary btn-sm" @click="triggerFileInput">📄 上传文件</button>
+        <button class="btn btn-secondary btn-sm" @click="triggerFolderInput">📁 上传文件夹</button>
       </div>
       <p class="text-xs text-base-content/60 mt-3">
         支持拖拽上传，自动保留文件夹结构

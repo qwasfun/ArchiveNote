@@ -19,7 +19,7 @@ const props = defineProps({
   // 当模态框打开才有 fileId
   fileId: {
     type: String,
-    // required: true,
+    default: '',
   },
   isOpen: {
     type: Boolean,
@@ -103,15 +103,15 @@ watch(
             </h2>
             <p class="flex gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
               <span class="badge badge-outline">{{ getFileExtension(file.filename) }} 文件</span>
-              <span class="badge badge-outline badge-warning" v-if="file.is_deleted === 1"
+              <span v-if="file.is_deleted === 1" class="badge badge-outline badge-warning"
                 >在回收站</span
               >
             </p>
           </div>
         </div>
         <button
-          @click="close"
           class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          @click="close"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -217,9 +217,9 @@ watch(
                   {{ file.filename }}
                 </span>
                 <button
-                  @click="copyToClipboard(file.filename)"
                   class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                   title="复制文件名"
+                  @click="copyToClipboard(file.filename)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -260,9 +260,9 @@ watch(
                 </span>
                 <button
                   v-if="file.hash"
-                  @click="copyToClipboard(file.hash)"
                   class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                   title="复制哈希值"
+                  @click="copyToClipboard(file.hash)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -340,9 +340,9 @@ watch(
                   {{ file.id }}
                 </span>
                 <button
-                  @click="copyToClipboard(file.id)"
                   class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                   title="复制 ID"
+                  @click="copyToClipboard(file.id)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -384,8 +384,8 @@ watch(
         <div class="flex gap-2">
           <button
             v-if="showRename"
-            @click="$emit('rename', file)"
             class="btn btn-sm btn-outline gap-2"
+            @click="$emit('rename', file)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -399,8 +399,8 @@ watch(
           </button>
           <button
             v-if="showDelete"
-            @click="$emit('delete', file.id)"
             class="btn btn-sm btn-outline btn-error gap-2"
+            @click="$emit('delete', file.id)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -416,8 +416,8 @@ watch(
         <div class="flex gap-2">
           <button
             v-if="showManageNotes"
-            @click="$emit('manage-notes', file, 'file')"
             class="btn btn-sm btn-primary gap-2"
+            @click="$emit('manage-notes', file, 'file')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

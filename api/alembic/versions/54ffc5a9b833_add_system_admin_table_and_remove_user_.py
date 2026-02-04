@@ -82,22 +82,18 @@ def downgrade() -> None:
         batch_op.add_column(sa.Column("role", sa.String(), nullable=True))
 
     # 将 system_admins 表中的用户恢复到 users.role
-    op.execute(
-        """
+    op.execute("""
         UPDATE users
         SET role = 'admin'
         WHERE id IN (SELECT user_id FROM system_admins)
-    """
-    )
+    """)
 
     # 设置其他用户为 'user'
-    op.execute(
-        """
+    op.execute("""
         UPDATE users
         SET role = 'user'
         WHERE role IS NULL
-    """
-    )
+    """)
 
     # 删除 system_admins 表
     op.drop_index(op.f("ix_system_admins_id"), table_name="system_admins")

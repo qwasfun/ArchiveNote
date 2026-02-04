@@ -257,7 +257,7 @@ defineExpose({
     />
 
     <!-- 默认插槽：包裹需要拖拽上传功能的内容 -->
-    <slot :triggerFileInput="triggerFileInput" :triggerFolderInput="triggerFolderInput"></slot>
+    <slot :trigger-file-input="triggerFileInput" :trigger-folder-input="triggerFolderInput"></slot>
 
     <!-- 拖拽覆盖层 -->
     <div
@@ -290,9 +290,9 @@ defineExpose({
       class="absolute top-4 right-4 z-40 flex gap-2"
     >
       <button
-        @click.stop="triggerFileInput"
         class="btn btn-sm btn-primary gap-2 shadow-lg"
         title="选择文件上传"
+        @click.stop="triggerFileInput"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -305,9 +305,9 @@ defineExpose({
         上传文件
       </button>
       <button
-        @click.stop="triggerFolderInput"
         class="btn btn-sm btn-primary gap-2 shadow-lg"
         title="选择文件夹上传"
+        @click.stop="triggerFolderInput"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

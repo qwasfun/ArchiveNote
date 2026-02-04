@@ -117,7 +117,7 @@ onMounted(() => {
     <div v-else-if="file" class="container mx-auto px-4 py-6">
       <!-- 头部导航 -->
       <div class="mb-6">
-        <button @click="goBack" class="btn btn-ghost gap-2">
+        <button class="btn btn-ghost gap-2" @click="goBack">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -155,7 +155,7 @@ onMounted(() => {
                   <span class="badge badge-outline"
                     >{{ getFileExtension(file.filename) }} 文件</span
                   >
-                  <span class="badge badge-outline badge-warning" v-if="file.is_deleted === 1"
+                  <span v-if="file.is_deleted === 1" class="badge badge-outline badge-warning"
                     >在回收站</span
                   >
                 </div>
@@ -243,7 +243,7 @@ onMounted(() => {
                 </svg>
                 下载文件
               </a>
-              <button @click="handleManageNotes" class="btn btn-outline w-full gap-2">
+              <button class="btn btn-outline w-full gap-2" @click="handleManageNotes">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -258,9 +258,9 @@ onMounted(() => {
                 }}</span>
               </button>
               <button
-                @click="showRenameModal = true"
-                class="btn btn-outline w-full gap-2"
                 v-if="!file.is_deleted === 1"
+                class="btn btn-outline w-full gap-2"
+                @click="showRenameModal = true"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -273,9 +273,9 @@ onMounted(() => {
                 重命名
               </button>
               <button
-                @click="handleDelete"
-                class="btn btn-outline btn-error w-full gap-2"
                 v-if="!file.is_deleted === 1"
+                class="btn btn-outline btn-error w-full gap-2"
+                @click="handleDelete"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -307,9 +307,9 @@ onMounted(() => {
                     {{ file.filename }}
                   </p>
                   <button
-                    @click="copyToClipboard(file.filename)"
                     class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                     title="复制"
+                    @click="copyToClipboard(file.filename)"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -356,9 +356,9 @@ onMounted(() => {
                     {{ file.hash }}
                   </p>
                   <button
-                    @click="copyToClipboard(file.hash)"
                     class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                     title="复制"
+                    @click="copyToClipboard(file.hash)"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -456,9 +456,9 @@ onMounted(() => {
                     {{ file.id }}
                   </p>
                   <button
-                    @click="copyToClipboard(file.id)"
                     class="btn btn-xs btn-ghost text-gray-400 hover:text-blue-500"
                     title="复制"
+                    @click="copyToClipboard(file.id)"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -508,12 +508,12 @@ onMounted(() => {
           type="text"
           placeholder="文件名"
           class="input input-bordered w-full mb-4"
-          @keyup.enter="handleRename"
           autoFocus
+          @keyup.enter="handleRename"
         />
         <div class="flex justify-end gap-2">
-          <button @click="showRenameModal = false" class="btn btn-ghost">取消</button>
-          <button @click="handleRename" class="btn btn-primary">保存</button>
+          <button class="btn btn-ghost" @click="showRenameModal = false">取消</button>
+          <button class="btn btn-primary" @click="handleRename">保存</button>
         </div>
       </div>
     </div>

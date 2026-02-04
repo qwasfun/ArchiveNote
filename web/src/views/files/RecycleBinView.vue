@@ -86,16 +86,16 @@ onMounted(() => {
         </div>
         <div class="flex gap-2">
           <button
-            @click="restoreItems"
             class="btn btn-success"
             :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+            @click="restoreItems"
           >
             还原
           </button>
           <button
-            @click="permanentDeleteItems"
             class="btn btn-error"
             :disabled="selectedFiles.length === 0 && selectedFolders.length === 0"
+            @click="permanentDeleteItems"
           >
             彻底删除
           </button>
@@ -113,7 +113,7 @@ onMounted(() => {
           :selection-mode="isSelectionMode"
           :selected-files="selectedFiles"
           :selected-folders="selectedFolders"
-          :isShowOperationBtn="false"
+          :is-show-operation-btn="false"
           @view-details="handleViewDetails"
           @selection-change="handleSelectionChange"
         />
