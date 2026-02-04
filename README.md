@@ -77,6 +77,16 @@ docker compose -f docker-compose.dev.yml up --build
 
 API 文档：http://localhost:8000/docs
 
+## 代码提交
+
+使用 [pre-commit](https://pre-commit.com/) 格式化
+
+```shell
+pip install pre-commit
+
+pre-commit run --all-files
+```
+
 ## 📚 数据库迁移
 
 ```bash
