@@ -65,6 +65,7 @@ watch(
         attachedFolders.value = newNote.folders || []
       }
     } else {
+      saveStatus.value = ''
       title.value = ''
       content.value = ''
       attachedFiles.value = []
@@ -94,11 +95,6 @@ const triggerAutoSave = () => {
           title: title.value,
           content: content.value,
         }
-        setTimeout(() => {
-          if (saveStatus.value === '已自动保存') {
-            saveStatus.value = ''
-          }
-        }, 2000)
       } else {
         saveStatus.value = '自动保存失败'
       }
@@ -209,7 +205,7 @@ const handleDetachFolder = async (folderId) => {
 
 <template>
   <div
-    class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col"
+    class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col"
   >
     <!-- 头部工具栏 -->
     <div
@@ -217,7 +213,7 @@ const handleDetachFolder = async (folderId) => {
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+          <div class="w-11 h-11 bg-blue-500 rounded-lg flex items-center justify-center">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -227,21 +223,27 @@ const handleDetachFolder = async (folderId) => {
               ></path>
             </svg>
           </div>
-          <div class="flex flex-col">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-center">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {{ note ? '编辑笔记' : '新建笔记' }}
             </h2>
-            <span v-if="saveStatus" class="text-xs text-gray-400">{{ saveStatus }}</span>
+
+            <div v-if="saveStatus" class="badge badge-info badge-xs md:mx-2">
+              {{ saveStatus }}
+            </div>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn btn-sm btn-soft" @click="$emit('cancel')">✖️ 取消</button>
+          <button class="btn btn-sm btn-soft" @click="$emit('cancel')">
+            ✖️ <span class="hidden sm:inline-block">取消</span>
+          </button>
           <button
             class="btn btn-sm btn-primary"
             :disabled="!title.trim() && !content.trim()"
             @click="handleManualSave"
           >
-            💾 保存并预览
+            💾
+            <span class="hidden sm:inline-block">保存并预览</span>
           </button>
         </div>
       </div>
