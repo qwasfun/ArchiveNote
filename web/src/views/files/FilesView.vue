@@ -44,6 +44,7 @@ const selectedFiles = ref([])
 const selectedFolders = ref([])
 const isSelectionMode = ref(false)
 const showBatchMoveModal = ref(false)
+const viewMode = ref('grid') // 'grid' or 'list'
 const moveTargetFolderId = ref(null)
 const moveBreadcrumbs = ref([])
 const moveFolders = ref([])
@@ -421,10 +422,10 @@ onMounted(async () => {
 
 <template>
   <div class="bg-gray-50 dark:bg-gray-900">
-    <div class="container mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-4">
       <!-- 头部区域 -->
-      <div class="mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="mb-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">📁 文件管理</h1>
             <p class="text-gray-600 dark:text-gray-400 mt-1">
@@ -432,6 +433,39 @@ onMounted(async () => {
             </p>
           </div>
           <div class="flex gap-2">
+            <!-- 视图切换按钮 -->
+            <div class="join">
+              <button
+                class="btn btn-sm join-item"
+                :class="viewMode === 'grid' ? 'btn-active' : 'btn-ghost'"
+                title="网格视图"
+                @click="viewMode = 'grid'"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+                  />
+                </svg>
+              </button>
+              <button
+                class="btn btn-sm join-item"
+                :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
+                title="列表视图"
+                @click="viewMode = 'list'"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
             <button
               class="btn"
               :class="isSelectionMode ? 'btn-secondary' : 'btn-ghost'"
@@ -488,7 +522,7 @@ onMounted(async () => {
       </div>
 
       <!-- Breadcrumbs -->
-      <div class="text-sm breadcrumbs mb-4">
+      <div class="text-sm breadcrumbs mb-3">
         <ul>
           <li v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
             <a
@@ -567,12 +601,14 @@ onMounted(async () => {
       </div>
 
       <!-- 上传区域 -->
-      <div v-if="showUploadModal" class="mb-8">
+      <div v-if="showUploadModal" class="mb-4">
         <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700"
         >
           <div class="flex justify-between items-start">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">📤 上传文件</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              📤 上传文件
+            </h2>
 
             <button
               v-if="supportsDirectUpload"
@@ -603,11 +639,11 @@ onMounted(async () => {
       </div>
 
       <!-- 搜索和过滤 -->
-      <div class="mb-6">
+      <div class="mb-4">
         <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700"
         >
-          <div class="flex flex-col lg:flex-row gap-4">
+          <div class="flex flex-col lg:flex-row gap-3">
             <!-- 搜索框 -->
             <div class="flex-1">
               <div class="relative">
@@ -651,7 +687,7 @@ onMounted(async () => {
 
           <!-- 统计信息 -->
           <div
-            class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+            class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700"
           >
             <span class="text-sm text-gray-500">
               显示 {{ files.length }} / {{ totalFiles }} 个文件
@@ -690,7 +726,7 @@ onMounted(async () => {
 
         <div
           v-else-if="files.length === 0 && folders.length === 0"
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700"
+          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 text-center border border-gray-200 dark:border-gray-700"
         >
           <div class="text-6xl mb-4">🔍</div>
 
@@ -708,7 +744,7 @@ onMounted(async () => {
           @upload-complete="handleDragUploadComplete"
         >
           <div
-            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700"
           >
             <FileGrid
               :files="files"
@@ -716,6 +752,7 @@ onMounted(async () => {
               :selection-mode="isSelectionMode"
               :selected-files="selectedFiles"
               :selected-folders="selectedFolders"
+              :view-mode="viewMode"
               @view-details="handleViewDetails"
               @selection-change="handleSelectionChange"
               @delete-file="handleDelete"
@@ -726,7 +763,7 @@ onMounted(async () => {
               @rename-file="handleRenameFile"
             />
             <!-- Pagination -->
-            <div v-if="totalPages > 1" class="flex justify-center mt-6">
+            <div v-if="totalPages > 1" class="flex justify-center mt-4">
               <div class="join">
                 <button
                   class="join-item btn"
