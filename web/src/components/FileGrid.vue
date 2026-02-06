@@ -6,7 +6,7 @@ import { getFileIcon, getFileTypeColor, isImage } from '@/utils/file'
 const props = defineProps({
   files: {
     type: Array,
-    required: true,
+    required: false,
     default: () => [],
   },
   folders: {
