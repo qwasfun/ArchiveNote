@@ -133,9 +133,11 @@ const handleAutoSave = async (noteData, callback) => {
       // 刷新列表以显示新笔记
       loadNotes()
     } else {
-      // 如果是更新，也可以选择刷新列表或者只更新本地状态
-      // 为了保持列表最新（如更新时间），最好刷新列表
-      // 但频繁刷新列表可能会导致UI抖动，这里暂不刷新列表，或者只在必要时刷新
+      // 如果是更新，也刷新当前笔记以拿到最新关联信息
+      if (savedNoteId) {
+        const freshNote = await noteService.getNote(savedNoteId)
+        selectedNote.value = freshNote
+      }
     }
   } catch (error) {
     console.error('Auto save failed', error)
@@ -204,6 +206,8 @@ const handleCancel = () => {
       isViewing.value = true
     }
   }
+  // 有可能更新了关联文件或文件夹，刷新一次列表，保持列表最新
+  loadNotes()
 }
 
 const handleDeleteFile = async (id) => {

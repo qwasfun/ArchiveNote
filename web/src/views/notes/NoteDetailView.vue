@@ -74,7 +74,7 @@ const handleCancel = () => {
 
 const handleAutoSave = async (noteData, callback) => {
   try {
-    await noteService.updateNote(noteId.value, noteData)
+    const latest = await noteService.updateNote(noteId.value, noteData)
 
     // 成功回调
     if (callback) callback(true)
@@ -83,6 +83,7 @@ const handleAutoSave = async (noteData, callback) => {
     if (note.value) {
       note.value = {
         ...note.value,
+        ...latest,
         ...noteData,
       }
     }
