@@ -17,6 +17,7 @@ const loading = ref(false)
 const isEditing = ref(false)
 const detailsFile = ref(null)
 const showDetails = ref(false)
+const isNoteDirty = ref(false)
 
 const noteId = computed(() => route.params.id)
 
@@ -68,6 +69,32 @@ const handleDelete = async () => {
 
 const handleCancel = () => {
   isEditing.value = false
+  isNoteDirty.value = false
+}
+
+const handleAutoSave = async (noteData, callback) => {
+  try {
+    const latest = await noteService.updateNote(noteId.value, noteData)
+
+    // 成功回调
+    if (callback) callback(true)
+
+    // 更新本地笔记数据（不重新加载整个笔记，避免打断编辑）
+    if (note.value) {
+      note.value = {
+        ...note.value,
+        ...latest,
+        ...noteData,
+      }
+    }
+  } catch (error) {
+    console.error('Auto save failed', error)
+    if (callback) callback(false)
+  }
+}
+
+const handleDirtyUpdate = (val) => {
+  isNoteDirty.value = val
 }
 
 const handleBack = () => {
@@ -130,7 +157,16 @@ onMounted(async () => {
 
       <!-- Editor Mode -->
       <div v-else-if="isEditing && note" class="mx-auto flex-1 pb-2 overflow-auto">
-        <NoteEditor :note="note" @save="handleSave" @cancel="handleCancel" />
+        <!-- <NoteEditor :note="note" @save="handleSave" @cancel="handleCancel" /> -->
+
+        <NoteEditor
+          v-if="isEditing"
+          :note="note"
+          @save="handleSave"
+          @auto-save="handleAutoSave"
+          @cancel="handleCancel"
+          @update:is-dirty="handleDirtyUpdate"
+        />
       </div>
 
       <!-- View Mode -->

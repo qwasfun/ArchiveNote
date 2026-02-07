@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import noteService from '../../api/noteService.js'
@@ -27,6 +27,8 @@ const pageSize = ref(10)
 const totalNotes = ref(0)
 const totalPages = ref(0)
 
+const isNoteDirty = ref(false)
+
 const { showToast } = useToast()
 
 const loadNotes = async () => {
@@ -52,24 +54,44 @@ const loadNotes = async () => {
   }
 }
 
+const confirmDiscardChanges = () => {
+  if (isNoteDirty.value) {
+    return confirm('您有未保存的修改，确定要离开吗？未保存的内容将会丢失。')
+  }
+  return true
+}
+
 const handlePageChange = (page) => {
+  if (isEditing.value && !confirmDiscardChanges()) return
   currentPage.value = page
   loadNotes()
 }
 
 const handleCreate = () => {
+  if (isEditing.value && !confirmDiscardChanges()) return
+
   selectedNote.value = null
   isViewing.value = false
   isEditing.value = true
+  isNoteDirty.value = false
+}
+
+const handleRefresh = () => {
+  if (isEditing.value && !confirmDiscardChanges()) return
+  loadNotes()
 }
 
 const handleView = (note) => {
+  if (isEditing.value && !confirmDiscardChanges()) return
+
   selectedNote.value = { ...note } // Clone to avoid direct mutation
   isViewing.value = true
   isEditing.value = false
+  isNoteDirty.value = false
 }
 
 const handleDetail = (note) => {
+  if (isEditing.value && !confirmDiscardChanges()) return
   // 跳转到独立的笔记详情页面
   router.push({ name: 'note-detail', params: { id: note.id } })
 }
@@ -80,6 +102,47 @@ const handleEdit = (note) => {
   }
   isViewing.value = false
   isEditing.value = true
+  isNoteDirty.value = false
+}
+
+const handleAutoSave = async (noteData, callback) => {
+  try {
+    let savedNoteId
+    let response
+    if (selectedNote.value && selectedNote.value.id) {
+      await noteService.updateNote(selectedNote.value.id, noteData)
+      savedNoteId = selectedNote.value.id
+    } else {
+      response = await noteService.createNote(noteData)
+      savedNoteId = response.id
+    }
+
+    // 成功回调
+    if (callback) callback(true)
+
+    // 如果是新建笔记，自动保存后需要更新selectedNote的ID，以便后续是更新操作而不是新建
+    if ((!selectedNote.value || !selectedNote.value.id) && savedNoteId) {
+      selectedNote.value = {
+        ...noteData,
+        id: savedNoteId,
+      }
+      // 重新通过API获取完整信息（包括时间戳等）
+      const freshNote = await noteService.getNote(savedNoteId)
+      selectedNote.value = freshNote
+
+      // 刷新列表以显示新笔记
+      loadNotes()
+    } else {
+      // 如果是更新，也刷新当前笔记以拿到最新关联信息
+      if (savedNoteId) {
+        const freshNote = await noteService.getNote(savedNoteId)
+        selectedNote.value = freshNote
+      }
+    }
+  } catch (error) {
+    console.error('Auto save failed', error)
+    if (callback) callback(false)
+  }
 }
 
 const handleSave = async (noteData) => {
@@ -94,6 +157,7 @@ const handleSave = async (noteData) => {
     }
 
     showToast('笔记已保存')
+    isNoteDirty.value = false
 
     // 重新加载笔记列表
     await loadNotes()
@@ -103,6 +167,10 @@ const handleSave = async (noteData) => {
     if (savedNote) {
       selectedNote.value = { ...savedNote }
     }
+
+    // 切换到预览模式
+    isEditing.value = false
+    isViewing.value = true
   } catch (error) {
     console.error('Failed to save note', error)
   }
@@ -123,13 +191,23 @@ const handleDelete = async (id) => {
 }
 
 const handleCancel = () => {
-  isEditing.value = false
-  if (!selectedNote.value?.id) {
-    isViewing.value = false
-    selectedNote.value = null
-  } else {
-    isViewing.value = true
+  // NoteEditor已经处理了脏检查提示（或者我们在这里处理）
+  // 如果NoteEditor的取消按钮触发了这个，说明用户已经点击了取消
+  // 但是我们需要确认是否真的要取消（如果NoteEditor内部没做确认）
+  // 通常取消按钮已经在NoteEditor里，但目前的NoteEditor使用了emit 'cancel'
+
+  if (confirmDiscardChanges()) {
+    isEditing.value = false
+    isNoteDirty.value = false
+    if (!selectedNote.value?.id) {
+      isViewing.value = false
+      selectedNote.value = null
+    } else {
+      isViewing.value = true
+    }
   }
+  // 有可能更新了关联文件或文件夹，刷新一次列表，保持列表最新
+  loadNotes()
 }
 
 const handleDeleteFile = async (id) => {
@@ -149,6 +227,8 @@ const handleFileClick = (file) => {
 }
 
 const handleFolderClick = (folder) => {
+  // 应该也检查是否有未保存修改
+  if (isEditing.value && !confirmDiscardChanges()) return
   // 跳转到文件列表页面，显示该文件夹内容
   router.push({ name: 'files', query: { folder_id: folder.id } })
 }
@@ -159,9 +239,22 @@ const handleCloseDetails = () => {
 }
 
 const renderedContent = computed(() => {
-  if (!selectedNote.value?.content) return '暂无内容'
+  if (!selectedNote.value?.content) return ''
   const rawHtml = marked.parse(selectedNote.value.content)
   return DOMPurify.sanitize(rawHtml)
+})
+
+const handleDirtyUpdate = (val) => {
+  isNoteDirty.value = val
+}
+
+// 路由守卫
+onBeforeRouteLeave((to, from, next) => {
+  if (isEditing.value && !confirmDiscardChanges()) {
+    next(false)
+  } else {
+    next()
+  }
 })
 
 onMounted(async () => {
@@ -182,7 +275,32 @@ onMounted(async () => {
             <h1 class="text-3xl font-bold">📝 笔记管理</h1>
             <p class="text-gray-600 dark:text-gray-400 mt-1">管理您的笔记</p>
           </div>
-          <button class="btn btn-primary btn-sm" @click="handleCreate">新建笔记</button>
+          <div class="flex items-center gap-2">
+            <button
+              class="btn btn-ghost btn-sm"
+              :disabled="loading"
+              :aria-busy="loading ? 'true' : 'false'"
+              aria-label="Refresh"
+              @click="handleRefresh"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                :class="{ 'animate-spin': loading }"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 3V8M21 8H16M21 8L18 5.29168C16.4077 3.86656 14.3051 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.2832 21 19.8675 18.008 20.777 14"
+                />
+              </svg>
+            </button>
+            <button class="btn btn-primary btn-sm" @click="handleCreate">新建笔记</button>
+          </div>
         </div>
 
         <div v-if="loading && notes.length === 0" class="flex justify-center p-4">
@@ -252,7 +370,9 @@ onMounted(async () => {
           v-if="isEditing"
           :note="selectedNote"
           @save="handleSave"
+          @auto-save="handleAutoSave"
           @cancel="handleCancel"
+          @update:is-dirty="handleDirtyUpdate"
         />
 
         <!-- Preview -->

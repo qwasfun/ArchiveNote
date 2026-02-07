@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onBeforeUnmount } from 'vue'
 import noteService from '../api/noteService'
 import FileFolderSelector from './FileFolderSelector.vue'
 import { useToast } from '@/composables/useToast'
@@ -13,7 +13,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['save', 'cancel'])
+const emit = defineEmits(['save', 'cancel', 'auto-save', 'update:isDirty'])
 
 const title = ref('')
 const content = ref('')
@@ -21,31 +21,113 @@ const attachedFiles = ref([])
 const attachedFolders = ref([])
 const showSelector = ref(false)
 
+const lastSavedState = ref({ title: '', content: '' })
+const saveStatus = ref('')
+let autoSaveTimer = null
+const currentNoteId = ref(null)
+
 const { showToast } = useToast()
+
+const isDirty = computed(() => {
+  return (
+    title.value !== lastSavedState.value.title || content.value !== lastSavedState.value.content
+  )
+})
+
+watch(isDirty, (newVal) => {
+  emit('update:isDirty', newVal)
+})
 
 // 监听属性变化
 watch(
   () => props.note,
-  (newNote) => {
+  (newNote, oldNote) => {
+    // 如果ID改变了，或者之前没有ID（新建），则视为切换了笔记，需要重置状态
+    // 如果是同一个ID，可能是自动保存后的更新，尽量不打断用户输入
+    const isNewNote = !oldNote || newNote?.id !== oldNote.id
+
     if (newNote) {
-      title.value = newNote.title || ''
-      content.value = newNote.content || ''
-      attachedFiles.value = newNote.files || []
-      attachedFolders.value = newNote.folders || []
+      if (isNewNote) {
+        title.value = newNote.title || ''
+        content.value = newNote.content || ''
+        attachedFiles.value = newNote.files || []
+        attachedFolders.value = newNote.folders || []
+        currentNoteId.value = newNote.id
+
+        // 更新最后保存状态
+        lastSavedState.value = {
+          title: newNote.title || '',
+          content: newNote.content || '',
+        }
+      } else {
+        // 同一个笔记更新，只更新非编辑字段
+        attachedFiles.value = newNote.files || []
+        attachedFolders.value = newNote.folders || []
+      }
     } else {
+      saveStatus.value = ''
       title.value = ''
       content.value = ''
       attachedFiles.value = []
       attachedFolders.value = []
+      currentNoteId.value = null
+      lastSavedState.value = { title: '', content: '' }
     }
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 )
 
+// 自动保存逻辑
+const triggerAutoSave = () => {
+  if (!title.value.trim() && !content.value.trim()) return
+
+  saveStatus.value = '正在保存...'
+  emit(
+    'auto-save',
+    {
+      title: title.value,
+      content: content.value,
+    },
+    (success) => {
+      if (success) {
+        saveStatus.value = '已自动保存'
+        lastSavedState.value = {
+          title: title.value,
+          content: content.value,
+        }
+      } else {
+        saveStatus.value = '自动保存失败'
+      }
+    },
+  )
+}
+
+// 监听内容变化触发自动保存
+watch([title, content], () => {
+  if (isDirty.value) {
+    saveStatus.value = '有未保存内容'
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = setTimeout(triggerAutoSave, 2000)
+  }
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(autoSaveTimer)
+})
+
 // 事件处理
-const handleSubmit = () => {
-  if (!title.value.trim() || !content.value.trim()) {
+const handleManualSave = () => {
+  if (!title.value.trim() && !content.value.trim()) {
     return
+  }
+
+  // 手动保存时，清除自动保存定时器，避免重复提交
+  clearTimeout(autoSaveTimer)
+
+  // 更新最后保存状态，防止isDirty误判
+  lastSavedState.value = {
+    title: title.value,
+    content: content.value,
   }
 
   emit('save', {
@@ -123,7 +205,7 @@ const handleDetachFolder = async (folderId) => {
 
 <template>
   <div
-    class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col"
+    class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col"
   >
     <!-- 头部工具栏 -->
     <div
@@ -131,7 +213,7 @@ const handleDetachFolder = async (folderId) => {
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+          <div class="w-11 h-11 bg-blue-500 rounded-lg flex items-center justify-center">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -141,18 +223,27 @@ const handleDetachFolder = async (folderId) => {
               ></path>
             </svg>
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {{ note ? '编辑笔记' : '新建笔记' }}
-          </h2>
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-center">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {{ note ? '编辑笔记' : '新建笔记' }}
+            </h2>
+
+            <div v-if="saveStatus" class="badge badge-info badge-xs md:mx-2">
+              {{ saveStatus }}
+            </div>
+          </div>
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn btn-sm btn-soft" @click="$emit('cancel')">✖️ 取消</button>
+          <button class="btn btn-sm btn-soft" @click="$emit('cancel')">
+            ✖️ <span class="hidden sm:inline-block">取消</span>
+          </button>
           <button
             class="btn btn-sm btn-primary"
-            :disabled="!title.trim() || !content.trim()"
-            @click="handleSubmit"
+            :disabled="!title.trim() && !content.trim()"
+            @click="handleManualSave"
           >
-            💾 保存
+            💾
+            <span class="hidden sm:inline-block">保存并预览</span>
           </button>
         </div>
       </div>

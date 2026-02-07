@@ -219,8 +219,8 @@ class Note(Base):
     )
     user_id = Column(String(36), ForeignKey("users.id"))  # 创建者
     workspace_id = Column(String(36), ForeignKey("workspaces.id"), nullable=False)
-    title: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    title: Mapped[Optional[str]] = mapped_column(String, nullable=False, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=True)
     # visibility: PRIVATE / PROTECTED / PUBLIC, default PRIVATE
     visibility = Column(String, default="PRIVATE", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
