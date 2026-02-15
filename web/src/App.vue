@@ -1,9 +1,12 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import ConfirmModal from './components/ConfirmModal.vue'
 import { useToast } from './composables/useToast'
+import { useConfirm } from './composables/useConfirm'
 
 const { toast } = useToast()
+const { state: confirmState, handleConfirm, handleCancel } = useConfirm()
 </script>
 
 <template>
@@ -13,6 +16,16 @@ const { toast } = useToast()
       <RouterView class="animate-fade-in" />
     </main>
     <ToastMessage v-model="toast.show" :message="toast.message" :type="toast.type" />
+    <ConfirmModal
+      v-model:show="confirmState.show"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :confirm-text="confirmState.confirmText"
+      :cancel-text="confirmState.cancelText"
+      :type="confirmState.type"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 

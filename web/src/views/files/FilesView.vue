@@ -9,6 +9,7 @@ import DragUploadZone from '../../components/DragUploadZone.vue'
 import fileService from '../../api/fileService.js'
 import folderService from '../../api/folderService.js'
 import storageBackendService from '../../api/storageBackendService.js'
+import { useConfirm } from '@/composables/useConfirm'
 
 const route = useRoute()
 const router = useRouter()
@@ -57,6 +58,7 @@ const uploadMode = ref('traditional')
 const defaultBackend = ref(null)
 // 是否支持直传（根据后端配置）
 const supportsDirectUpload = ref(false)
+const { confirm: showConfirm } = useConfirm()
 
 const toggleSelectionMode = () => {
   isSelectionMode.value = !isSelectionMode.value
@@ -70,14 +72,15 @@ const handleSelectionChange = (selection) => {
 }
 
 const batchDelete = async () => {
-  if (
-    !confirm(
-      `Are you sure you want to delete ${selectedFiles.value.length} files and ${selectedFolders.value.length} folders?`,
-    )
-  )
-    return
-
   try {
+    await showConfirm(
+      `Are you sure you want to delete ${selectedFiles.value.length} files and ${selectedFolders.value.length} folders?`,
+      {
+        title: '确认批量删除',
+        type: 'error',
+      },
+    )
+
     if (selectedFiles.value.length > 0) {
       await fileService.batchDeleteFiles({ file_ids: selectedFiles.value })
     }
@@ -89,7 +92,9 @@ const batchDelete = async () => {
     selectedFolders.value = []
     isSelectionMode.value = false
   } catch (error) {
-    console.error('Batch delete failed', error)
+    if (error !== false) {
+      console.error('Batch delete failed', error)
+    }
   }
 }
 
@@ -260,14 +265,20 @@ const renameFolder = async () => {
 }
 
 const deleteFolder = async (folder) => {
-  if (!confirm(`Are you sure you want to delete folder "${folder.name}" and all its contents?`))
-    return
-
   try {
+    await showConfirm(
+      `Are you sure you want to delete folder "${folder.name}" and all its contents?`,
+      {
+        title: '确认删除文件夹',
+        type: 'error',
+      },
+    )
     await folderService.deleteFolder(folder.id)
     await loadData()
   } catch (error) {
-    console.error('Failed to delete folder', error)
+    if (error !== false) {
+      console.error('Failed to delete folder', error)
+    }
   }
 }
 
@@ -300,13 +311,18 @@ const handleUploadSuccess = async () => {
 }
 
 const handleDelete = async (id) => {
-  if (!confirm('Are you sure you want to delete this file?')) return
   try {
+    await showConfirm('Are you sure you want to delete this file?', {
+      title: '确认删除',
+      type: 'error',
+    })
     await fileService.deleteFile(id)
     showDetails.value = false
     await loadData()
   } catch (error) {
-    console.error('Failed to delete file', error)
+    if (error !== false) {
+      console.error('Failed to delete file', error)
+    }
   }
 }
 

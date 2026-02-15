@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify'
 import noteService from '../../api/noteService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
 import FileDetails from '../../components/FileDetails.vue'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -20,6 +21,7 @@ const showDetails = ref(false)
 const isNoteDirty = ref(false)
 
 const noteId = computed(() => route.params.id)
+const { confirm: showConfirm } = useConfirm()
 
 // 检查是否可以返回（是否从其他页面导航过来）
 const canGoBack = ref(false)
@@ -58,12 +60,17 @@ const handleSave = async (noteData) => {
 }
 
 const handleDelete = async () => {
-  if (!confirm('Are you sure you want to delete this note?')) return
   try {
+    await showConfirm('Are you sure you want to delete this note?', {
+      title: '确认删除',
+      type: 'error',
+    })
     await noteService.deleteNote(noteId.value)
     router.push({ name: 'notes' })
   } catch (error) {
-    console.error('Failed to delete note', error)
+    if (error !== false) {
+      console.error('Failed to delete note', error)
+    }
   }
 }
 

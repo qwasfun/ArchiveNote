@@ -8,6 +8,7 @@ import fileService from '../../api/fileService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate, formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -30,6 +31,7 @@ const totalPages = ref(0)
 const isNoteDirty = ref(false)
 
 const { showToast } = useToast()
+const { confirm: showConfirm } = useConfirm()
 
 const loadNotes = async () => {
   loading.value = true
@@ -54,21 +56,29 @@ const loadNotes = async () => {
   }
 }
 
-const confirmDiscardChanges = () => {
+const confirmDiscardChanges = async () => {
   if (isNoteDirty.value) {
-    return confirm('您有未保存的修改，确定要离开吗？未保存的内容将会丢失。')
+    try {
+      await showConfirm('您有未保存的修改，确定要离开吗？未保存的内容将会丢失。', {
+        title: '确认放弃修改',
+        type: 'warning',
+      })
+      return true
+    } catch {
+      return false
+    }
   }
   return true
 }
 
-const handlePageChange = (page) => {
-  if (isEditing.value && !confirmDiscardChanges()) return
+const handlePageChange = async (page) => {
+  if (isEditing.value && !(await confirmDiscardChanges())) return
   currentPage.value = page
   loadNotes()
 }
 
-const handleCreate = () => {
-  if (isEditing.value && !confirmDiscardChanges()) return
+const handleCreate = async () => {
+  if (isEditing.value && !(await confirmDiscardChanges())) return
 
   selectedNote.value = null
   isViewing.value = false
@@ -76,13 +86,13 @@ const handleCreate = () => {
   isNoteDirty.value = false
 }
 
-const handleRefresh = () => {
-  if (isEditing.value && !confirmDiscardChanges()) return
+const handleRefresh = async () => {
+  if (isEditing.value && !(await confirmDiscardChanges())) return
   loadNotes()
 }
 
-const handleView = (note) => {
-  if (isEditing.value && !confirmDiscardChanges()) return
+const handleView = async (note) => {
+  if (isEditing.value && !(await confirmDiscardChanges())) return
 
   selectedNote.value = { ...note } // Clone to avoid direct mutation
   isViewing.value = true
@@ -90,14 +100,15 @@ const handleView = (note) => {
   isNoteDirty.value = false
 }
 
-const handleDetail = (note) => {
-  if (isEditing.value && !confirmDiscardChanges()) return
+const handleDetail = async (note) => {
+  if (isEditing.value && !(await confirmDiscardChanges())) return
   // 跳转到独立的笔记详情页面
   router.push({ name: 'note-detail', params: { id: note.id } })
 }
 
-const handleEdit = (note) => {
+const handleEdit = async (note) => {
   if (note) {
+    if (isEditing.value && !(await confirmDiscardChanges())) return
     selectedNote.value = { ...note }
   }
   isViewing.value = false
@@ -177,8 +188,11 @@ const handleSave = async (noteData) => {
 }
 
 const handleDelete = async (id) => {
-  if (!confirm('Are you sure you want to delete this note?')) return
   try {
+    await showConfirm('Are you sure you want to delete this note?', {
+      title: '确认删除',
+      type: 'error',
+    })
     await noteService.deleteNote(id)
     await loadNotes()
     if (selectedNote.value && selectedNote.value.id === id) {
@@ -186,17 +200,19 @@ const handleDelete = async (id) => {
       selectedNote.value = null
     }
   } catch (error) {
-    console.error('Failed to delete note', error)
+    if (error !== false) {
+      console.error('Failed to delete note', error)
+    }
   }
 }
 
-const handleCancel = () => {
+const handleCancel = async () => {
   // NoteEditor已经处理了脏检查提示（或者我们在这里处理）
   // 如果NoteEditor的取消按钮触发了这个，说明用户已经点击了取消
   // 但是我们需要确认是否真的要取消（如果NoteEditor内部没做确认）
   // 通常取消按钮已经在NoteEditor里，但目前的NoteEditor使用了emit 'cancel'
 
-  if (confirmDiscardChanges()) {
+  if (await confirmDiscardChanges()) {
     isEditing.value = false
     isNoteDirty.value = false
     if (!selectedNote.value?.id) {
@@ -211,13 +227,18 @@ const handleCancel = () => {
 }
 
 const handleDeleteFile = async (id) => {
-  if (!confirm('Are you sure you want to delete this file?')) return
   try {
+    await showConfirm('Are you sure you want to delete this file?', {
+      title: '确认删除',
+      type: 'error',
+    })
     await fileService.deleteFile(id)
     showDetails.value = false
     await loadNotes()
   } catch (error) {
-    console.error('Failed to delete file', error)
+    if (error !== false) {
+      console.error('Failed to delete file', error)
+    }
   }
 }
 
@@ -226,9 +247,9 @@ const handleFileClick = (file) => {
   showDetails.value = true
 }
 
-const handleFolderClick = (folder) => {
+const handleFolderClick = async (folder) => {
   // 应该也检查是否有未保存修改
-  if (isEditing.value && !confirmDiscardChanges()) return
+  if (isEditing.value && !(await confirmDiscardChanges())) return
   // 跳转到文件列表页面，显示该文件夹内容
   router.push({ name: 'files', query: { folder_id: folder.id } })
 }
@@ -249,8 +270,8 @@ const handleDirtyUpdate = (val) => {
 }
 
 // 路由守卫
-onBeforeRouteLeave((to, from, next) => {
-  if (isEditing.value && !confirmDiscardChanges()) {
+onBeforeRouteLeave(async (to, from, next) => {
+  if (isEditing.value && !(await confirmDiscardChanges())) {
     next(false)
   } else {
     next()

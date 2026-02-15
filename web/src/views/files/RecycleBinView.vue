@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
-
 import recycleService from '../../api/recycleService.js'
+import { useConfirm } from '@/composables/useConfirm'
 
 const files = ref([])
 const folders = ref([])
@@ -13,6 +13,7 @@ const selectedFolders = ref([])
 const isSelectionMode = ref(true) // Default to selection mode for easier management
 const detailsFile = ref(null)
 const showDetails = ref(false)
+const { confirm: showConfirm } = useConfirm()
 
 const loadData = async () => {
   loading.value = true
@@ -47,8 +48,12 @@ const restoreItems = async () => {
 }
 
 const permanentDeleteItems = async () => {
-  if (!confirm('Are you sure? This cannot be undone.')) return
   try {
+    await showConfirm('Are you sure? This cannot be undone.', {
+      title: '确认彻底删除',
+      type: 'error',
+      confirmText: '彻底删除',
+    })
     await recycleService.permanentDeleteItems({
       file_ids: selectedFiles.value,
       folder_ids: selectedFolders.value,
@@ -57,7 +62,9 @@ const permanentDeleteItems = async () => {
     selectedFiles.value = []
     selectedFolders.value = []
   } catch (e) {
-    console.error(e)
+    if (e !== false) {
+      console.error(e)
+    }
   }
 }
 
