@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import storageBackendService from '@/api/storageBackendService'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 const BACKEND_TYPES = [
   {
@@ -28,14 +29,15 @@ const BACKEND_TYPES = [
 
 const S3_BACKEND_TYPES = ['aws_s3', 'aliyun_oss', 'minio', 's3']
 
+const { showToast } = useToast()
+const { confirm: showConfirm } = useConfirm()
+
 const backends = ref([])
 const loading = ref(true)
 const submitting = ref(false)
 const testingId = ref(null)
 const isEditing = ref(false)
 const currentId = ref(null)
-
-const { showToast } = useToast()
 
 const importing = ref(false)
 const selectedFile = ref(null)
@@ -179,14 +181,20 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (backend) => {
-  if (!confirm(`确定要删除 "${backend.name}" 吗？此操作不可恢复。`)) return
-
   try {
+    await showConfirm(`确定要删除 "${backend.name}" 吗？此操作不可恢复。`, {
+      title: '确认删除',
+      type: 'error',
+      confirmText: '删除',
+    })
+
     await storageBackendService.deleteBackend(backend.id)
     showToast('删除成功')
     fetchBackends()
   } catch (error) {
-    showToast(error.response?.data?.detail || '删除失败', 'error')
+    if (error !== false) {
+      showToast(error.response?.data?.detail || '删除失败', 'error')
+    }
   }
 }
 

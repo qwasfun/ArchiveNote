@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import noteService from '../api/noteService'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 
@@ -23,6 +24,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'note-created'])
+
+const { confirm: showConfirm } = useConfirm()
 
 const notes = ref([])
 const selectedNote = ref(null)
@@ -133,9 +136,12 @@ const renderedContent = computed(() => {
 })
 
 const detachNote = async (noteId) => {
-  if (!confirm('确定要取消此笔记的关联吗？（笔记本身不会被删除）')) return
-
   try {
+    await showConfirm('确定要取消此笔记的关联吗？（笔记本身不会被删除）', {
+      title: '确认取消关联',
+      type: 'warning',
+    })
+
     if (props.itemType === 'folder') {
       await noteService.detachFolders(noteId, [props.item.id])
     } else {
@@ -148,14 +154,20 @@ const detachNote = async (noteId) => {
     }
     emit('note-created')
   } catch (error) {
-    console.error('Failed to detach note', error)
+    if (error !== false) {
+      console.error('Failed to detach note', error)
+    }
   }
 }
 
 const deleteNote = async (noteId) => {
-  if (!confirm('确定要永久删除这条笔记吗？此操作无法撤销！')) return
-
   try {
+    await showConfirm('确定要永久删除这条笔记吗？此操作无法撤销！', {
+      title: '确认删除',
+      type: 'error',
+      confirmText: '删除',
+    })
+
     await noteService.deleteNote(noteId)
     await loadNotes()
     if (selectedNote.value?.id === noteId) {
@@ -163,7 +175,9 @@ const deleteNote = async (noteId) => {
     }
     emit('note-created')
   } catch (error) {
-    console.error('Failed to delete note', error)
+    if (error !== false) {
+      console.error('Failed to delete note', error)
+    }
   }
 }
 
