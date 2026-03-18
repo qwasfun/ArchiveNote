@@ -15,9 +15,11 @@ import fileService from '@/api/fileService.js'
 import UnifiedNotes from '@/components/UnifiedNotes.vue'
 import PDFViewer from '@/components/PDFViewer.vue'
 import TextViewer from '@/components/TextViewer.vue'
+import { useConfirm } from '@/composables/useConfirm'
 
 const route = useRoute()
 const router = useRouter()
+const { confirm: showConfirm } = useConfirm()
 
 const file = ref(null)
 const loading = ref(false)
@@ -79,13 +81,18 @@ const handleRename = async () => {
 }
 
 const handleDelete = async () => {
-  if (!confirm(`确定要删除文件 "${file.value.filename}" 吗？`)) return
   try {
+    await showConfirm(`确定要删除文件 "${file.value.filename}" 吗？`, {
+      title: '确认删除',
+      type: 'error',
+    })
     await fileService.deleteFile(file.value.id)
     router.push({ name: 'files' })
   } catch (error) {
-    console.error('删除失败:', error)
-    alert('删除失败')
+    if (error !== false) {
+      console.error('删除失败:', error)
+      alert('删除失败')
+    }
   }
 }
 

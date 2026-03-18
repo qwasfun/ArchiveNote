@@ -6,6 +6,7 @@ import noteService from '../../api/noteService.js'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
+import { useConfirm } from '@/composables/useConfirm'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,6 +23,7 @@ const showDetails = ref(false)
 const notesItem = ref(null)
 const notesItemType = ref('file')
 const showNotes = ref(false)
+const { confirm: showConfirm } = useConfirm()
 
 // 计算属性
 const totalResults = computed(() => files.value.length + notes.value.length)
@@ -82,13 +84,18 @@ const performSearch = async () => {
 
 // 事件处理
 const handleDelete = async (id) => {
-  if (!confirm('确定要删除这个文件吗？')) return
   try {
+    await showConfirm('确定要删除这个文件吗？', {
+      title: '确认删除',
+      type: 'error',
+    })
     await fileService.deleteFile(id)
     showDetails.value = false
     await performSearch()
   } catch (error) {
-    console.error('Failed to delete file', error)
+    if (error !== false) {
+      console.error('Failed to delete file', error)
+    }
   }
 }
 

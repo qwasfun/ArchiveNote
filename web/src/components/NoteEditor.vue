@@ -3,6 +3,7 @@ import { ref, watch, computed, onBeforeUnmount } from 'vue'
 import noteService from '../api/noteService'
 import FileFolderSelector from './FileFolderSelector.vue'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 import { formatSize } from '@/utils/format'
 
@@ -27,6 +28,7 @@ let autoSaveTimer = null
 const currentNoteId = ref(null)
 
 const { showToast } = useToast()
+const { confirm: showConfirm } = useConfirm()
 
 const isDirty = computed(() => {
   return (
@@ -177,28 +179,36 @@ const handleAttachItems = async ({ files: fileIds, folders: folderIds }) => {
 const handleDetachFile = async (fileId) => {
   if (!props.note || !props.note.id) return
 
-  if (!confirm('确定要移除这个文件的关联吗？')) return
-
   try {
+    await showConfirm('确定要移除这个文件的关联吗？', {
+      title: '确认移除',
+      type: 'warning',
+    })
     await noteService.detachFiles(props.note.id, [fileId])
     attachedFiles.value = attachedFiles.value.filter((file) => file.id !== fileId)
   } catch (error) {
-    console.error('Failed to detach file', error)
-    showToast('移除文件关联失败', 'error')
+    if (error !== false) {
+      console.error('Failed to detach file', error)
+      showToast('移除文件关联失败', 'error')
+    }
   }
 }
 
 const handleDetachFolder = async (folderId) => {
   if (!props.note || !props.note.id) return
 
-  if (!confirm('确定要移除这个文件夹的关联吗？')) return
-
   try {
+    await showConfirm('确定要移除这个文件夹的关联吗？', {
+      title: '确认移除',
+      type: 'warning',
+    })
     await noteService.detachFolders(props.note.id, [folderId])
     attachedFolders.value = attachedFolders.value.filter((folder) => folder.id !== folderId)
   } catch (error) {
-    console.error('Failed to detach folder', error)
-    showToast('移除文件夹关联失败', 'error')
+    if (error !== false) {
+      console.error('Failed to detach folder', error)
+      showToast('移除文件夹关联失败', 'error')
+    }
   }
 }
 </script>
