@@ -1,60 +1,59 @@
 import service from '@/utils/service'
 
-export default {
-  // 获取默认存储后端配置（普通用户也可访问）
-  getDefaultBackend() {
-    return service.get('/v1/storage-backends/default')
-  },
-  // 获取所有存储后端
-  getBackends() {
-    return service.get('/v1/storage-backends')
-  },
+// 获取默认存储后端配置（普通用户也可访问）
+export function getDefaultBackend() {
+  return service.get('/v1/storage-backends/default')
+}
 
-  // 获取指定存储后端
-  getBackend(id) {
-    return service.get(`/v1/storage-backends/${id}`)
-  },
+// 获取所有存储后端
+export function getBackends() {
+  return service.get('/v1/storage-backends')
+}
 
-  // 创建存储后端
-  createBackend(data) {
-    return service.post('/v1/storage-backends', data)
-  },
+// 获取指定存储后端
+export function getBackend(id) {
+  return service.get(`/v1/storage-backends/${id}`)
+}
 
-  // 更新存储后端
-  updateBackend(id, data) {
-    return service.put(`/v1/storage-backends/${id}`, data)
-  },
+// 创建存储后端
+export function createBackend(data) {
+  return service.post('/v1/storage-backends', data)
+}
 
-  // 删除存储后端
-  deleteBackend(id) {
-    return service.delete(`/v1/storage-backends/${id}`)
-  },
+// 更新存储后端
+export function updateBackend(id, data) {
+  return service.put(`/v1/storage-backends/${id}`, data)
+}
 
-  // 设置默认存储后端
-  setDefaultBackend(id) {
-    return service.post(`/v1/storage-backends/${id}/set-default`)
-  },
+// 删除存储后端
+export function deleteBackend(id) {
+  return service.delete(`/v1/storage-backends/${id}`)
+}
 
-  // 测试存储后端连接
-  testBackend(id) {
-    return service.post(`/v1/storage-backends/${id}/test`)
-  },
+// 设置默认存储后端
+export function setDefaultBackend(id) {
+  return service.post(`/v1/storage-backends/${id}/set-default`)
+}
 
-  // 导出存储配置
-  exportConfig() {
-    return service.get('/v1/storage-backends/export/config')
-  },
+// 测试存储后端连接
+export function testBackend(id) {
+  return service.post(`/v1/storage-backends/${id}/test`)
+}
 
-  // 导入存储配置
-  importConfig(formData, replaceExisting = false) {
-    return service.post(
-      `/v1/storage-backends/import/config?replace_existing=${replaceExisting}`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+// 导出存储配置
+export function exportConfig() {
+  return service.get('/v1/storage-backends/export/config')
+}
+
+// 导入存储配置
+export function importConfig(formData, replaceExisting = false) {
+  return service.post(
+    `/v1/storage-backends/import/config?replace_existing=${replaceExisting}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    )
-  },
+    },
+  )
 }

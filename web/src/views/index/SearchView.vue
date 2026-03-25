@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import fileService from '../../api/fileService.js'
-import noteService from '../../api/noteService.js'
+import { getFiles, deleteFile } from '../../api/fileService.js'
+import { getNotes } from '../../api/noteService.js'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
@@ -67,8 +67,8 @@ const performSearch = async () => {
 
   try {
     const [filesRes, notesRes] = await Promise.all([
-      fileService.getFiles({ q: searchQuery }),
-      noteService.getNotes({ q: searchQuery }),
+      getFiles({ q: searchQuery }),
+      getNotes({ q: searchQuery }),
     ])
 
     files.value = filesRes.data || []
@@ -89,7 +89,7 @@ const handleDelete = async (id) => {
       title: '确认删除',
       type: 'error',
     })
-    await fileService.deleteFile(id)
+    await deleteFile(id)
     showDetails.value = false
     await performSearch()
   } catch (error) {

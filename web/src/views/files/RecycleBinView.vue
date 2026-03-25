@@ -2,7 +2,11 @@
 import { ref, onMounted } from 'vue'
 import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
-import recycleService from '../../api/recycleService.js'
+import {
+  getItems,
+  restoreItems as apiRestoreItems,
+  permanentDeleteItems as apiPermanentDeleteItems,
+} from '../../api/recycleService.js'
 import { useConfirm } from '@/composables/useConfirm'
 
 const files = ref([])
@@ -18,7 +22,7 @@ const { confirm: showConfirm } = useConfirm()
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await recycleService.getItems()
+    const res = await getItems()
     files.value = res.files || []
     folders.value = res.folders || []
   } catch (error) {
@@ -35,7 +39,7 @@ const handleSelectionChange = (selection) => {
 
 const restoreItems = async () => {
   try {
-    await recycleService.restoreItems({
+    await apiRestoreItems({
       file_ids: selectedFiles.value,
       folder_ids: selectedFolders.value,
     })
@@ -54,7 +58,7 @@ const permanentDeleteItems = async () => {
       type: 'error',
       confirmText: '彻底删除',
     })
-    await recycleService.permanentDeleteItems({
+    await apiPermanentDeleteItems({
       file_ids: selectedFiles.value,
       folder_ids: selectedFolders.value,
     })

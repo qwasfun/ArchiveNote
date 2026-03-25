@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import noteService from '../../api/noteService.js'
+import { getNote, updateNote, deleteNote } from '../../api/noteService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import { useConfirm } from '@/composables/useConfirm'
@@ -31,7 +31,7 @@ const loadNote = async () => {
 
   loading.value = true
   try {
-    const response = await noteService.getNote(noteId.value)
+    const response = await getNote(noteId.value)
     note.value = response
   } catch (error) {
     console.error('Failed to load note', error)
@@ -51,7 +51,7 @@ const handleEdit = () => {
 
 const handleSave = async (noteData) => {
   try {
-    await noteService.updateNote(noteId.value, noteData)
+    await updateNote(noteId.value, noteData)
     await loadNote()
     isEditing.value = false
   } catch (error) {
@@ -65,7 +65,7 @@ const handleDelete = async () => {
       title: '确认删除',
       type: 'error',
     })
-    await noteService.deleteNote(noteId.value)
+    await deleteNote(noteId.value)
     router.push({ name: 'notes' })
   } catch (error) {
     if (error !== false) {
@@ -81,7 +81,7 @@ const handleCancel = () => {
 
 const handleAutoSave = async (noteData, callback) => {
   try {
-    const latest = await noteService.updateNote(noteId.value, noteData)
+    const latest = await updateNote(noteId.value, noteData)
 
     // 成功回调
     if (callback) callback(true)

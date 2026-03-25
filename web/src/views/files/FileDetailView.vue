@@ -11,7 +11,7 @@ import {
   isPdf,
   isText,
 } from '@/utils/file'
-import fileService from '@/api/fileService.js'
+import { getFile, renameFile, deleteFile } from '@/api/fileService.js'
 import UnifiedNotes from '@/components/UnifiedNotes.vue'
 import PDFViewer from '@/components/PDFViewer.vue'
 import TextViewer from '@/components/TextViewer.vue'
@@ -46,7 +46,7 @@ const loadFile = async () => {
   try {
     const fileId = route.params.id
     // 通过获取文件列表来获取单个文件信息
-    const response = await fileService.getFile(fileId)
+    const response = await getFile(fileId)
     const foundFile = response
     if (foundFile) {
       file.value = foundFile
@@ -71,7 +71,7 @@ const goBack = () => {
 const handleRename = async () => {
   if (!newFileName.value.trim()) return
   try {
-    await fileService.renameFile(file.value.id, { filename: newFileName.value })
+    await renameFile(file.value.id, { filename: newFileName.value })
     showRenameModal.value = false
     await loadFile()
   } catch (error) {
@@ -86,7 +86,7 @@ const handleDelete = async () => {
       title: '确认删除',
       type: 'error',
     })
-    await fileService.deleteFile(file.value.id)
+    await deleteFile(file.value.id)
     router.push({ name: 'files' })
   } catch (error) {
     if (error !== false) {

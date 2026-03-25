@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import noteService from '../../api/noteService.js'
-import fileService from '../../api/fileService.js'
+import { getNotes, createNote, updateNote, getNote, deleteNote } from '../../api/noteService.js'
+import { deleteFile } from '../../api/fileService.js'
 import NoteEditor from '../../components/NoteEditor.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import { useToast } from '@/composables/useToast'
@@ -36,7 +36,7 @@ const { confirm: showConfirm } = useConfirm()
 const loadNotes = async () => {
   loading.value = true
   try {
-    const response = await noteService.getNotes({
+    const response = await getNotes({
       page: currentPage.value,
       page_size: pageSize.value,
     })
@@ -121,10 +121,10 @@ const handleAutoSave = async (noteData, callback) => {
     let savedNoteId
     let response
     if (selectedNote.value && selectedNote.value.id) {
-      await noteService.updateNote(selectedNote.value.id, noteData)
+      await updateNote(selectedNote.value.id, noteData)
       savedNoteId = selectedNote.value.id
     } else {
-      response = await noteService.createNote(noteData)
+      response = await createNote(noteData)
       savedNoteId = response.id
     }
 
@@ -138,7 +138,7 @@ const handleAutoSave = async (noteData, callback) => {
         id: savedNoteId,
       }
       // 重新通过API获取完整信息（包括时间戳等）
-      const freshNote = await noteService.getNote(savedNoteId)
+      const freshNote = await getNote(savedNoteId)
       selectedNote.value = freshNote
 
       // 刷新列表以显示新笔记
@@ -146,7 +146,7 @@ const handleAutoSave = async (noteData, callback) => {
     } else {
       // 如果是更新，也刷新当前笔记以拿到最新关联信息
       if (savedNoteId) {
-        const freshNote = await noteService.getNote(savedNoteId)
+        const freshNote = await getNote(savedNoteId)
         selectedNote.value = freshNote
       }
     }
@@ -160,10 +160,10 @@ const handleSave = async (noteData) => {
   try {
     let savedNoteId
     if (selectedNote.value && selectedNote.value.id) {
-      await noteService.updateNote(selectedNote.value.id, noteData)
+      await updateNote(selectedNote.value.id, noteData)
       savedNoteId = selectedNote.value.id
     } else {
-      const response = await noteService.createNote(noteData)
+      const response = await createNote(noteData)
       savedNoteId = response.id
     }
 
@@ -193,7 +193,7 @@ const handleDelete = async (id) => {
       title: '确认删除',
       type: 'error',
     })
-    await noteService.deleteNote(id)
+    await deleteNote(id)
     await loadNotes()
     if (selectedNote.value && selectedNote.value.id === id) {
       isViewing.value = false
@@ -232,7 +232,7 @@ const handleDeleteFile = async (id) => {
       title: '确认删除',
       type: 'error',
     })
-    await fileService.deleteFile(id)
+    await deleteFile(id)
     showDetails.value = false
     await loadNotes()
   } catch (error) {
