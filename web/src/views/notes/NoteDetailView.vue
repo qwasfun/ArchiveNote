@@ -266,7 +266,7 @@ onMounted(async () => {
               class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl cursor-pointer transition-colors group"
               @click="handleFolderClick(folder)"
             >
-              <div class="text-3xl flex-shrink-0">📁</div>
+              <div class="text-3xl shrink-0">📁</div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium truncate group-hover:text-primary">{{ folder.name }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -274,7 +274,7 @@ onMounted(async () => {
                 </p>
               </div>
               <svg
-                class="w-5 h-5 text-gray-400 group-hover:text-primary flex-shrink-0"
+                class="w-5 h-5 text-gray-400 group-hover:text-primary shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -307,7 +307,7 @@ onMounted(async () => {
               @click="handleFileClick(file)"
             >
               <div
-                :class="`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${getFileTypeColor(file.mime_type)}`"
+                :class="`w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0 ${getFileTypeColor(file.mime_type)}`"
               >
                 {{ getFileIcon(file.mime_type) }}
               </div>
@@ -316,7 +316,7 @@ onMounted(async () => {
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatSize(file.size) }}</p>
               </div>
               <svg
-                class="w-5 h-5 text-gray-400 group-hover:text-primary flex-shrink-0"
+                class="w-5 h-5 text-gray-400 group-hover:text-primary shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

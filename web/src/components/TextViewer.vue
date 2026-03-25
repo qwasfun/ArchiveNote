@@ -79,7 +79,7 @@ watch(
     <!-- 文本内容 -->
     <pre
       v-else-if="textContent"
-      class="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words"
+      class="text-gray-900 dark:text-gray-100 whitespace-pre-wrap wrap-break-word"
       >{{ textContent }}</pre
     >
 
