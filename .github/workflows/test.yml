@@ -1,0 +1,159 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── 后端单元 / 集成测试 ────────────────────────────────────────────
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: archivenote_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (including test group)
+        run: uv sync --group test
+
+      - name: Run pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/archivenote_test
+          SECRET_KEY: ci-test-secret-key
+        run: uv run pytest --cov=app --cov-report=xml -q
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          files: api/coverage.xml
+          flags: backend
+
+  # ─── 前端单元测试 ──────────────────────────────────────────────────
+  frontend:
+    name: Frontend (vitest)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run vitest
+        run: npm run test:coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          files: web/coverage/lcov.info
+          flags: frontend
+
+  # ─── E2E 测试（需后端 + 前端均就绪）──────────────────────────────
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: archivenote
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: api
+        run: uv sync
+
+      - name: Start backend
+        working-directory: api
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/archivenote
+          SECRET_KEY: ci-e2e-secret-key
+        run: |
+          uv run python -m alembic upgrade head
+          uv run uvicorn app.app:app --host 0.0.0.0 --port 2601 &
+          # wait for backend to be ready
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:2601/api/hello && break || sleep 2
+          done
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: .
+        env:
+          CI: true
+          VITE_API_BASE_URL: http://localhost:2601/api
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
