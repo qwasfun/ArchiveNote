@@ -1,6 +1,15 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
-import storageBackendService from '@/api/storageBackendService'
+import {
+  getBackends,
+  updateBackend,
+  createBackend,
+  deleteBackend,
+  setDefaultBackend,
+  testBackend,
+  exportConfig,
+  importConfig,
+} from '@/api/storageBackendService'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 
@@ -88,7 +97,7 @@ watch(
 const fetchBackends = async () => {
   loading.value = true
   try {
-    backends.value = await storageBackendService.getBackends()
+    backends.value = await getBackends()
   } catch (error) {
     showToast('加载存储后端失败', 'error')
     console.error(error)
@@ -162,12 +171,12 @@ const handleSubmit = async () => {
     if (isEditing.value) {
       // Update
       submitData.is_active = true // Keep active on update
-      await storageBackendService.updateBackend(currentId.value, submitData)
+      await updateBackend(currentId.value, submitData)
       showToast('更新成功')
     } else {
       // Create
       submitData.is_default = form.is_default
-      await storageBackendService.createBackend(submitData)
+      await createBackend(submitData)
       showToast('创建成功')
     }
 
@@ -188,7 +197,7 @@ const handleDelete = async (backend) => {
       confirmText: '删除',
     })
 
-    await storageBackendService.deleteBackend(backend.id)
+    await deleteBackend(backend.id)
     showToast('删除成功')
     fetchBackends()
   } catch (error) {
@@ -200,7 +209,7 @@ const handleDelete = async (backend) => {
 
 const handleSetDefault = async (backend) => {
   try {
-    await storageBackendService.setDefaultBackend(backend.id)
+    await setDefaultBackend(backend.id)
     showToast('已设置为默认后端')
     fetchBackends()
   } catch (error) {
@@ -211,7 +220,7 @@ const handleSetDefault = async (backend) => {
 const handleTest = async (backend) => {
   testingId.value = backend.id
   try {
-    const res = await storageBackendService.testBackend(backend.id)
+    const res = await testBackend(backend.id)
     showToast(res.message || '连接测试成功')
   } catch (error) {
     showToast(error.response?.data?.detail || '连接测试失败', 'error')
@@ -222,7 +231,7 @@ const handleTest = async (backend) => {
 
 const handleExport = async () => {
   try {
-    const response = await storageBackendService.exportConfig()
+    const response = await exportConfig()
     // Create download link
     const blob = new Blob([JSON.stringify(response, null, 2)], {
       type: 'application/json',
@@ -273,7 +282,7 @@ const handleImport = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    const result = await storageBackendService.importConfig(formData, importOptions.replaceExisting)
+    const result = await importConfig(formData, importOptions.replaceExisting)
 
     importResult.value = result
     showToast(result.message || '导入成功')

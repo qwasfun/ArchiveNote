@@ -2,7 +2,17 @@
 import { ref, watch, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import noteService from '../api/noteService'
+import {
+  getNotesByFolderId,
+  getNotesByFileId,
+  updateNote,
+  createNote,
+  attachFolders,
+  attachFiles,
+  detachFolders,
+  detachFiles,
+  deleteNote as apiDeleteNote,
+} from '../api/noteService'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
@@ -44,10 +54,10 @@ const loadNotes = async () => {
   try {
     let response
     if (props.itemType === 'folder') {
-      response = await noteService.getNotesByFolderId(props.item.id)
+      response = await getNotesByFolderId(props.item.id)
       notes.value = response.data || []
     } else {
-      response = await noteService.getNotesByFileId(props.item.id)
+      response = await getNotesByFileId(props.item.id)
       notes.value = response.data || []
     }
   } catch (error) {
@@ -94,22 +104,22 @@ const saveNote = async () => {
   try {
     if (editingNote.value.id) {
       // 更新现有笔记
-      await noteService.updateNote(editingNote.value.id, {
+      await updateNote(editingNote.value.id, {
         title: editingNote.value.title,
         content: editingNote.value.content,
       })
     } else {
       // 创建新笔记并关联
-      const newNote = await noteService.createNote({
+      const newNote = await createNote({
         title: editingNote.value.title,
         content: editingNote.value.content,
       })
 
       // 关联笔记
       if (props.itemType === 'folder') {
-        await noteService.attachFolders(newNote.id, [props.item.id])
+        await attachFolders(newNote.id, [props.item.id])
       } else if (props.itemType === 'file') {
-        await noteService.attachFiles(newNote.id, [props.item.id])
+        await attachFiles(newNote.id, [props.item.id])
       }
 
       emit('note-created')
@@ -143,9 +153,9 @@ const detachNote = async (noteId) => {
     })
 
     if (props.itemType === 'folder') {
-      await noteService.detachFolders(noteId, [props.item.id])
+      await detachFolders(noteId, [props.item.id])
     } else {
-      await noteService.detachFiles(noteId, [props.item.id])
+      await detachFiles(noteId, [props.item.id])
     }
 
     await loadNotes()
@@ -168,7 +178,7 @@ const deleteNote = async (noteId) => {
       confirmText: '删除',
     })
 
-    await noteService.deleteNote(noteId)
+    await apiDeleteNote(noteId)
     await loadNotes()
     if (selectedNote.value?.id === noteId) {
       selectedNote.value = null

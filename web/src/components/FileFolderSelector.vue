@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import fileService from '../api/fileService'
-import folderService from '../api/folderService'
+import { getFiles } from '../api/fileService'
+import { getFolders } from '../api/folderService'
 import { getFileIcon, isImage } from '@/utils/file'
 import DragUploadZone from './DragUploadZone.vue'
 
@@ -68,7 +68,7 @@ const loadData = async () => {
       if (currentFolderId.value) {
         folderParams.parent_id = currentFolderId.value
       }
-      promises.push(folderService.getFolders(folderParams))
+      promises.push(getFolders(folderParams))
     } else {
       promises.push(Promise.resolve([]))
     }
@@ -83,7 +83,7 @@ const loadData = async () => {
       if (currentFolderId.value) {
         fileParams.folder_id = currentFolderId.value
       }
-      promises.push(fileService.getFiles(fileParams))
+      promises.push(getFiles(fileParams))
     } else {
       promises.push(Promise.resolve({ data: [], total: 0, total_pages: 0 }))
     }

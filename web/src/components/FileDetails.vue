@@ -13,7 +13,7 @@ import {
 
 import PDFViewer from '@/components/PDFViewer.vue'
 import TextViewer from '@/components/TextViewer.vue'
-import fileService from '../api/fileService'
+import { getFile } from '../api/fileService'
 
 const props = defineProps({
   // 当模态框打开才有 fileId
@@ -67,7 +67,7 @@ watch(
     try {
       const id = props.fileId
       if (newVal && id) {
-        const response = await fileService.getFile(id)
+        const response = await getFile(id)
         file.value = response
       }
     } catch (error) {

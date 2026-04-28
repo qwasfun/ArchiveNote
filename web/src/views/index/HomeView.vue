@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import fileService from '../../api/fileService.js'
-import noteService from '../../api/noteService.js'
-import statsService from '../../api/statsService.js'
+import { getFiles } from '../../api/fileService.js'
+import { getNotes } from '../../api/noteService.js'
+import { getStats } from '../../api/statsService.js'
 import { formatSize } from '@/utils/format'
 import { getFileIcon, getFileTypeColor } from '@/utils/file'
 import { useAuthStore } from '@/stores/auth.js'
@@ -41,14 +41,14 @@ const goToNotes = () => router.push('/notes')
 const loadData = async () => {
   try {
     // 加载统计数据
-    const statsData = await statsService.getStats()
+    const statsData = await getStats()
     stats.value.totalFiles = statsData.file_count
     stats.value.totalSize = statsData.storage_usage
     stats.value.totalNotes = statsData.note_count
     stats.value.todayActivity = statsData.today_activity
 
     // 加载文件列表用于展示最近文件
-    const filesResponse = await fileService.getFiles()
+    const filesResponse = await getFiles()
     const files = filesResponse.data || []
 
     // 最近文件（最多5个）
@@ -57,7 +57,7 @@ const loadData = async () => {
       .slice(0, 5)
 
     // 加载笔记列表用于展示最近笔记
-    const notesResponse = await noteService.getNotes()
+    const notesResponse = await getNotes()
     const notes = notesResponse.data || []
 
     // 最近笔记（最多5个）

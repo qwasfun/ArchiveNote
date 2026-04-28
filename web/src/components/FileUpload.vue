@@ -1,7 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 
-import fileService from '../api/fileService'
+import {
+  uploadFiles as apiUploadFiles,
+  getPresignedUploadUrl,
+  uploadToS3,
+  confirmDirectUpload,
+} from '../api/fileService'
 
 const props = defineProps({
   folderId: {
@@ -138,7 +143,7 @@ const uploadFilesTraditional = async (filesWithPaths) => {
       params.folder_id = props.folderId
     }
 
-    await fileService.uploadFiles(formData, params)
+    await apiUploadFiles(formData, params)
     uploadedCount += batch.length
     uploadProgress.value.current = uploadedCount
     console.log(`已上传 ${uploadedCount}/${totalFiles} 个文件`)
@@ -161,17 +166,17 @@ const uploadFilesDirect = async (filesWithPaths) => {
         params.folder_id = props.folderId
       }
 
-      const presignedData = await fileService.getPresignedUploadUrl(
+      const presignedData = await getPresignedUploadUrl(
         path, // 使用完整路径作为文件名
         file.type,
         params,
       )
 
       // 2. 直接上传到S3
-      await fileService.uploadToS3(presignedData, file)
+      await uploadToS3(presignedData, file)
 
       // 3. 确认上传完成，创建数据库记录
-      await fileService.confirmDirectUpload({
+      await confirmDirectUpload({
         s3_key: presignedData.s3_key,
         filename: path,
         size: file.size,

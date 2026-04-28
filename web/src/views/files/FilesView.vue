@@ -6,9 +6,23 @@ import FileGrid from '../../components/FileGrid.vue'
 import FileDetails from '../../components/FileDetails.vue'
 import UnifiedNotes from '../../components/UnifiedNotes.vue'
 import DragUploadZone from '../../components/DragUploadZone.vue'
-import fileService from '../../api/fileService.js'
-import folderService from '../../api/folderService.js'
-import storageBackendService from '../../api/storageBackendService.js'
+import {
+  getFiles,
+  batchDeleteFiles,
+  batchMoveFiles,
+  renameFile,
+  deleteFile,
+} from '../../api/fileService.js'
+import {
+  getFolders,
+  getFolder,
+  batchDeleteFolders,
+  batchMoveFolders,
+  createFolder as apiCreateFolder,
+  updateFolder,
+  deleteFolder as apiDeleteFolder,
+} from '../../api/folderService.js'
+import { getDefaultBackend } from '../../api/storageBackendService.js'
 import { useConfirm } from '@/composables/useConfirm'
 
 const route = useRoute()
@@ -82,10 +96,10 @@ const batchDelete = async () => {
     )
 
     if (selectedFiles.value.length > 0) {
-      await fileService.batchDeleteFiles({ file_ids: selectedFiles.value })
+      await batchDeleteFiles({ file_ids: selectedFiles.value })
     }
     if (selectedFolders.value.length > 0) {
-      await folderService.batchDeleteFolders({ folder_ids: selectedFolders.value })
+      await batchDeleteFolders({ folder_ids: selectedFolders.value })
     }
     await loadData()
     selectedFiles.value = []
@@ -105,7 +119,7 @@ const loadMoveFolders = async () => {
     if (moveTargetFolderId.value) {
       params.parent_id = moveTargetFolderId.value
     }
-    const res = await folderService.getFolders(params)
+    const res = await getFolders(params)
     moveFolders.value = res.data
   } catch (e) {
     console.error(e)
@@ -137,13 +151,13 @@ const navigateMoveBreadcrumb = async (index) => {
 const confirmBatchMove = async () => {
   try {
     if (selectedFiles.value.length > 0) {
-      await fileService.batchMoveFiles({
+      await batchMoveFiles({
         file_ids: selectedFiles.value,
         folder_id: moveTargetFolderId.value,
       })
     }
     if (selectedFolders.value.length > 0) {
-      await folderService.batchMoveFolders({
+      await batchMoveFolders({
         folder_ids: selectedFolders.value,
         parent_id: moveTargetFolderId.value,
       })
@@ -167,7 +181,7 @@ const handleRenameFile = (file) => {
 const confirmRenameFile = async () => {
   if (!renameFileName.value) return
   try {
-    await fileService.renameFile(editingFile.value.id, { filename: renameFileName.value })
+    await renameFile(editingFile.value.id, { filename: renameFileName.value })
     showRenameFileModal.value = false
     editingFile.value = null
     renameFileName.value = ''
@@ -196,10 +210,7 @@ const loadData = async () => {
       folderParams.parent_id = currentFolderId.value
     }
 
-    const [filesRes, foldersRes] = await Promise.all([
-      fileService.getFiles(params),
-      folderService.getFolders(folderParams),
-    ])
+    const [filesRes, foldersRes] = await Promise.all([getFiles(params), getFolders(folderParams)])
 
     if ((filesRes.data || []).length === 0 && currentPage.value > 1) {
       currentPage.value = 1
@@ -231,7 +242,7 @@ const createFolder = async () => {
   if (!newFolderName.value.trim()) return
 
   try {
-    await folderService.createFolder({
+    await apiCreateFolder({
       name: newFolderName.value,
       parent_id: currentFolderId.value,
     })
@@ -253,7 +264,7 @@ const renameFolder = async () => {
   if (!renameFolderName.value.trim()) return
 
   try {
-    await folderService.updateFolder(editingFolder.value.id, {
+    await updateFolder(editingFolder.value.id, {
       name: renameFolderName.value,
     })
     showRenameFolderModal.value = false
@@ -273,7 +284,7 @@ const deleteFolder = async (folder) => {
         type: 'error',
       },
     )
-    await folderService.deleteFolder(folder.id)
+    await apiDeleteFolder(folder.id)
     await loadData()
   } catch (error) {
     if (error !== false) {
@@ -316,7 +327,7 @@ const handleDelete = async (id) => {
       title: '确认删除',
       type: 'error',
     })
-    await fileService.deleteFile(id)
+    await deleteFile(id)
     showDetails.value = false
     await loadData()
   } catch (error) {
@@ -356,7 +367,7 @@ const handleNoteCreated = () => {
 
 const loadDefaultBackend = async () => {
   try {
-    const backend = await storageBackendService.getDefaultBackend()
+    const backend = await getDefaultBackend()
     defaultBackend.value = backend
     // 只有S3类型且启用了客户端直传才支持直传模式
     supportsDirectUpload.value =
@@ -400,7 +411,7 @@ const buildBreadcrumbs = async (folderId) => {
 
     // 从当前文件夹向上追溯到根目录
     while (currentId) {
-      const folder = await folderService.getFolder(currentId)
+      const folder = await getFolder(currentId)
       path.unshift({ id: folder.id, name: folder.name })
       currentId = folder.parent_id
     }

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, computed, onBeforeUnmount } from 'vue'
-import noteService from '../api/noteService'
+import { attachFiles, attachFolders, getNote, detachFiles, detachFolders } from '../api/noteService'
 import FileFolderSelector from './FileFolderSelector.vue'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -158,16 +158,16 @@ const handleAttachItems = async ({ files: fileIds, folders: folderIds }) => {
     // 同时关联文件和文件夹
     const promises = []
     if (fileIds.length > 0) {
-      promises.push(noteService.attachFiles(props.note.id, fileIds))
+      promises.push(attachFiles(props.note.id, fileIds))
     }
     if (folderIds.length > 0) {
-      promises.push(noteService.attachFolders(props.note.id, folderIds))
+      promises.push(attachFolders(props.note.id, folderIds))
     }
 
     await Promise.all(promises)
 
     // 重新获取笔记信息以更新关联列表
-    const response = await noteService.getNote(props.note.id)
+    const response = await getNote(props.note.id)
     attachedFiles.value = response.files || []
     attachedFolders.value = response.folders || []
   } catch (error) {
@@ -184,7 +184,7 @@ const handleDetachFile = async (fileId) => {
       title: '确认移除',
       type: 'warning',
     })
-    await noteService.detachFiles(props.note.id, [fileId])
+    await detachFiles(props.note.id, [fileId])
     attachedFiles.value = attachedFiles.value.filter((file) => file.id !== fileId)
   } catch (error) {
     if (error !== false) {
@@ -202,7 +202,7 @@ const handleDetachFolder = async (folderId) => {
       title: '确认移除',
       type: 'warning',
     })
-    await noteService.detachFolders(props.note.id, [folderId])
+    await detachFolders(props.note.id, [folderId])
     attachedFolders.value = attachedFolders.value.filter((folder) => folder.id !== folderId)
   } catch (error) {
     if (error !== false) {
