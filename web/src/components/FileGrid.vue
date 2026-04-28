@@ -387,7 +387,7 @@ const hoveredFolder = ref(null)
             class="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
             @click="$emit('open-folder', folder)"
           >
-            <div v-if="selectionMode" class="flex-shrink-0">
+            <div v-if="selectionMode" class="shrink-0">
               <input
                 type="checkbox"
                 :checked="localSelectedFolders.includes(folder.id)"
@@ -395,7 +395,7 @@ const hoveredFolder = ref(null)
                 @click.stop="toggleFolderSelection(folder.id)"
               />
             </div>
-            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-2xl">📁</div>
+            <div class="shrink-0 w-10 h-10 flex items-center justify-center text-2xl">📁</div>
             <div class="flex-1 min-w-0">
               <h4 class="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                 {{ folder.name }}
@@ -457,7 +457,7 @@ const hoveredFolder = ref(null)
             class="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow transition-all duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer"
             @click="$emit('view-details', file)"
           >
-            <div v-if="selectionMode" class="flex-shrink-0">
+            <div v-if="selectionMode" class="shrink-0">
               <input
                 type="checkbox"
                 :checked="localSelectedFiles.includes(file.id)"
@@ -467,7 +467,7 @@ const hoveredFolder = ref(null)
             </div>
             <!-- 文件预览缩略图 -->
             <div
-              class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+              class="shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
             >
               <img
                 v-if="isImage(file.mime_type)"

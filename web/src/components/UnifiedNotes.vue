@@ -368,7 +368,7 @@ watch(
         </div>
 
         <!-- 右侧：笔记内容/编辑器 -->
-        <div class="flex-1 flex flex-col overflow-hidden break-words">
+        <div class="flex-1 flex flex-col overflow-hidden wrap-break-word">
           <!-- 编辑模式 -->
           <div v-if="isEditing" class="flex-1 flex flex-col">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">

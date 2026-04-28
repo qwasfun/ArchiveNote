@@ -830,7 +830,7 @@ onMounted(async () => {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg p-6 w-[32rem] shadow-xl flex flex-col max-h-[80vh]"
+        class="bg-white dark:bg-gray-800 rounded-lg p-6 w-lg shadow-xl flex flex-col max-h-[80vh]"
       >
         <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">移动到...</h3>
 

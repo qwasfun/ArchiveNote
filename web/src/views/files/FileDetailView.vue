@@ -151,7 +151,7 @@ onMounted(() => {
               </div>
               <div class="flex-1 min-w-0">
                 <h1
-                  class="text-3xl font-bold text-gray-900 dark:text-gray-100 break-words mb-2"
+                  class="text-3xl font-bold text-gray-900 dark:text-gray-100 wrap-break-word mb-2"
                   :title="file.filename"
                 >
                   {{ file.filename }}
