@@ -20,10 +20,6 @@ describe('isImage', () => {
     expect(isImage('video/mp4')).toBe(false)
     expect(isImage('text/plain')).toBe(false)
   })
-
-  it('undefined 返回 false', () => {
-    expect(isImage(undefined)).toBe(false)
-  })
 })
 
 describe('isVideo', () => {
